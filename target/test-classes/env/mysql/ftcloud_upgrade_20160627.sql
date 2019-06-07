@@ -1,0 +1,1 @@
+ALTER TABLE `charging_rules` ADD COLUMN `state` int(2) NOT NULL DEFAULT 1 COMMENT '状态（1：正常；2：启用）' AFTER `name`;

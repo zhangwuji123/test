@@ -1,0 +1,1 @@
+ALTER TABLE sys_user DROP INDEX username;

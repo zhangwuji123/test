@@ -1,0 +1,1 @@
+ALTER TABLE `elastic_gen_config` ADD COLUMN `system_password`  varchar(128) NULL COMMENT '系统密码' AFTER `disk_size`;

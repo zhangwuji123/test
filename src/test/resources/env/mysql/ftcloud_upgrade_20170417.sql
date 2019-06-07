@@ -1,0 +1,2 @@
+INSERT INTO `sysconfig` (`uuid`, `module_name`, `param_name`, `value`) VALUES ('31', 'CPU核数枚举', 'cpu_number_enum', '1,2,4,8,16,32,64');
+INSERT INTO `sysconfig` (`uuid`, `module_name`, `param_name`, `value`) VALUES ('32', '内存G枚举', 'mem_size_enum', '1,2,4,8,16,32,64');

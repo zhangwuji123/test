@@ -1,0 +1,3759 @@
+示例：
+
+-----20160804 begin--------
+1、秦利滨 修改viconfig.properties 添加通知功能     影响job
+
+增加
+unionmon.url=http://unionmonserver/unionmon/eventexternal
+unionmon.sendnum=20
+unionmoin.file.path=
+
+-----20160804 end--------
+
+-----20160804 begin--------
+1、盛健勃修改template_info表，增加highly_available
+2、instance_volume_info表，增加约束
+
+SQL 如下：
+
+ALTER TABLE `template_info`
+ADD COLUMN `highly_available`  int(255) NULL DEFAULT NULL COMMENT '高可用 0：否，1：是' AFTER `disk_format`;
+
+ALTER TABLE `instance_volume_info` ADD CONSTRAINT `fk_reference_22_volume_key` FOREIGN KEY (`storage_uuid`) REFERENCES `storage` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+-----20160804 end--------
+
+-----20160811 begin--------
+1、吴小铎 新增表，只为资源统计，私有云点击显示使用，不影响其它功能  
+
+CREATE TABLE `resource_display` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `name` varchar(128) DEFAULT NULL COMMENT '操作系统名称',
+  `version_number` varchar(128) DEFAULT NULL COMMENT '操作系统版本号',
+  `type` varchar(20) DEFAULT NULL COMMENT '类型',
+  `image_name` varchar(128) DEFAULT NULL COMMENT '操作系统对应的图片',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `resource_display` VALUES ('1', 'Windows 2008 R2 企业版 64位', '2008', 'Iaas', 'windows.png');
+INSERT INTO `resource_display` VALUES ('10', 'CentOS 7.2 64Bit', '7.2', 'Iaas', 'centos.png');
+INSERT INTO `resource_display` VALUES ('11', 'openSUSE 11 64Bit', '11', 'Iaas', 'os_suse.png');
+INSERT INTO `resource_display` VALUES ('12', 'openSUSE 11 64Bit', '12.3', 'Iaas', 'os_suse.png');
+INSERT INTO `resource_display` VALUES ('2', 'Windows 2012 R2 简体中文 64位', '2012', 'Iaas', 'windows.png');
+INSERT INTO `resource_display` VALUES ('3', 'Windows 7', '7', 'Iaas', 'windwos.ping');
+INSERT INTO `resource_display` VALUES ('4', 'Windows 8.1', '8.1', 'Iaas', 'windows.png');
+INSERT INTO `resource_display` VALUES ('5', 'CentOS 6.3 64Bit', '6.3', 'Iaas', 'centos.png');
+INSERT INTO `resource_display` VALUES ('6', 'CentOS 6.4 64Bit', '6.4', 'Iaas', 'centos.png');
+INSERT INTO `resource_display` VALUES ('7', 'CentOS 6.5 64Bit', '6.5', 'Iaas', 'centos.png');
+INSERT INTO `resource_display` VALUES ('8', 'CentOS 6.6 64Bit', '6.6', 'Iaas', 'centos.png');
+INSERT INTO `resource_display` VALUES ('9', 'CentOS 7 64Bit', '7', 'Iaas', 'centos.png');
+
+-----20160811 end--------
+
+-----20160815 begin--------
+1.孙超增加Licence的建表语句
+CREATE TABLE `licence_info` (
+`uuid`  varchar(128) PRIMARY key ,
+`import_date`  datetime NULL COMMENT '导入日期',
+`state`  int(1) NULL COMMENT '0:无效;1:有效',
+`licence`  text not NULL COMMENT 'base64编码的licence'
+);
+-----20160815 end----------
+-----20160817 begin--------
+1.盛义东增加了告警指派用户功能的修改表结构语句
+ALTER TABLE alert ADD COLUMN assign_user_uuid varchar(128) NULL DEFAULT NULL COMMENT '指派用户' after user_uuid;
+ALTER TABLE alert ADD COLUMN assign_time datetime NULL DEFAULT NULL COMMENT '指派时间' after resolved_time;
+2.王建昌增加系统配置参数
+INSERT INTO `sysconfig` VALUES ('23', '启用部门配额', 'isQuotaEnable', '0');
+-----20160817 end----------
+
+-----20160824 begin--------
+/usr/local/ftcloud/conf/下增加ftcloud.keystore，密码为futong123!
+-----20160824 end--------
+
+-----20160825 begin--------
+1.盛义东修改集群表结构，添加集群类型字段
+ALTER TABLE cluster ADD COLUMN type int(2) DEFAULT NULL COMMENT '集群类型，1：云主机，2：物理机，3：云存储' after state;
+-----20160825 end--------
+
+
+-----20160901 begin-------- 
+ftcloud_upgrade_20160811.sql
+吴小铎 更改resource_display表，增加字段resource_allocation列。并新增加显示记录。不影响其他功能，只影响私有云显示。
+-----20160901 end--------
+
+
+-----20160902 begin-------- 
+吴小铎 在表datacenter zone pool cluster 中增加内存占用率字段 影响相关表查询
+
+alter table datacenter add mem_alloc double(11,0) comment '内存已经分配的核数';
+alter table zone add mem_alloc double(11,0) comment '内存已经分配的核数';
+alter table pool add mem_alloc double(11,0) comment '内存已经分配的核数';
+alter table cluster add mem_alloc double(11,0) comment '内存已经分配的核数';
+
+update datacenter set mem_alloc = 0;
+update zone set mem_alloc = 0;
+update pool set mem_alloc = 0;
+update cluster set mem_alloc = 0;
+-----20160902 end--------
+
+-----20160906 begin--------
+王建昌添加资源交付时间order_info表
+ALTER TABLE `order_info`
+ADD COLUMN `submit_time`  datetime NULL COMMENT '资源交付时间' AFTER `code`;
+ALTER TABLE `physical_machine`
+MODIFY COLUMN `create_time`  datetime NOT NULL COMMENT '创建时间' AFTER `due_time`,
+ADD COLUMN `network_card_number`  int(11) NULL AFTER `disk_size`,
+ADD COLUMN `os`  varchar(128) NULL AFTER `network_card_number`,
+DROP PRIMARY KEY,
+ADD PRIMARY KEY (`uuid`, `create_time`);
+ALTER TABLE `physical_machine`
+MODIFY COLUMN `network_card_number`  int(11) NULL DEFAULT NULL COMMENT '网卡数量' AFTER `disk_size`,
+MODIFY COLUMN `os`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '操作系统的名称' AFTER `network_card_number`;
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('52', NULL, '小型机', '99', '/miniMachine', NULL, 'miniMachine');
+
+-----20160906 end--------
+
+-----20160907 begin--------
+盛义东添加充值记录表recharge_record表
+CREATE TABLE `recharge_record` (
+  `uuid` varchar(128) NOT NULL COMMENT '主键',
+  `user_uuid` varchar(128) NOT NULL COMMENT '关联用户',
+  `money` double(8,2) NOT NULL COMMENT '充值金额',
+  `create_time` datetime NOT NULL COMMENT '充值时间',
+  PRIMARY KEY (`uuid`),
+  KEY `user_uuid` (`user_uuid`),
+  CONSTRAINT `recharge_record_ibfk_1` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-----20160907 end--------
+
+-----20160908 begin--------
+盛义东修改日志表operation_log表
+ALTER TABLE `operation_log` MODIFY COLUMN `operation` varchar(128) DEFAULT '' COMMENT 'operation:create(创建)/update(修改)/delete(删除)/take(接管)';
+-----20160908 end--------
+
+-----20160909 begin-------
+吴小铎增加小型机信息表：mini_machine 和 小型机检测结果表：security_detection_result 。只影响 小型机功能
+CREATE TABLE `security_detection_result` (
+  `uuid` varchar(128) NOT NULL,
+  `state` int(1) DEFAULT NULL COMMENT '实例状态；0:异常；1：检测中；2：正常；',
+  `detect_time` datetime DEFAULT NULL,
+  `result` text COMMENT '检测结果',
+  `instance_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `fk_reference_instance_uuid` (`instance_uuid`),
+  CONSTRAINT `fk_reference_instance_uuid` FOREIGN KEY (`instance_uuid`) REFERENCES `mini_machine` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `mini_machine` (
+  `uuid` varchar(128) NOT NULL DEFAULT '' COMMENT 'ID',
+  `name` varchar(64) DEFAULT NULL COMMENT '名称',
+  `ip_address` varchar(128) DEFAULT NULL COMMENT 'IP地址',
+  `model` varchar(128) DEFAULT NULL COMMENT '型号',
+  `description` varchar(128) DEFAULT NULL COMMENT '描述',
+  `user_name` varchar(128) DEFAULT NULL COMMENT '用户名',
+  `password` varchar(128) DEFAULT NULL COMMENT '密码',
+  `check_time` varchar(128) DEFAULT '1' COMMENT '未检测 或最后一次检测时间',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+盛义东修改单实例模板
+ALTER TABLE single_instance_template ADD COLUMN flow_max_size int(11) DEFAULT NULL COMMENT '带宽最大值' AFTER quota;
+ALTER TABLE single_instance_template ADD COLUMN flow_min_size int(11) DEFAULT NULL COMMENT '带宽最小值' AFTER quota;
+-----20160909 end--------
+-----20160913 start--------
+王建昌增加轮播图片和公告功能
+CREATE TABLE `notice` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `name` varchar(128) DEFAULT NULL COMMENT '名称标题',
+  `description` varchar(300) DEFAULT NULL COMMENT '描述信息',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='公告表';
+CREATE TABLE `banner` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `name` varchar(128) DEFAULT NULL COMMENT '名称',
+  `title_image_path` varchar(300) DEFAULT NULL COMMENT '标题图片路径',
+  `content_image_path` varchar(300) DEFAULT NULL COMMENT '内容图片路径',
+  `description` varchar(300) DEFAULT NULL COMMENT '描述',
+  `create_time` datetime DEFAULT NULL COMMENT '穿件时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='自服务首页轮播图片的小图和点进去的大图，默认显示前三个';
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('53', NULL, '公告', '99', '/notice', NULL, 'notice');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('54', NULL, '轮播广告', '99', '/banner', NULL, 'banner');
+-----20160913 end--------
+-----20160919 start------
+王建昌添加带宽表
+CREATE TABLE `bandwidth` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `name` varchar(64) DEFAULT NULL COMMENT '名称',
+  `description` varchar(300) DEFAULT NULL COMMENT '描述',
+  `type` varchar(4) DEFAULT NULL COMMENT '类型（1、流量，2带宽）',
+  `size` double(11,0) DEFAULT NULL COMMENT '流量/带宽大小',
+  `time_long` datetime DEFAULT NULL COMMENT '时长',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `due_time` int(11) DEFAULT NULL COMMENT '到期时间',
+  `user_uuid` varchar(128) DEFAULT NULL COMMENT '所属用户',
+  `order_uuid` varchar(128) DEFAULT NULL COMMENT '所属订单',
+  `charging_rules_uuid` varchar(128) DEFAULT NULL COMMENT '计费规则',
+  PRIMARY KEY (`uuid`),
+  KEY `user_uuid` (`user_uuid`),
+  KEY `order_uuid` (`order_uuid`),
+  KEY `charging_rules_uuid` (`charging_rules_uuid`),
+  CONSTRAINT `bandwidth_ibfk_1` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`),
+  CONSTRAINT `bandwidth_ibfk_2` FOREIGN KEY (`order_uuid`) REFERENCES `order_info` (`uuid`),
+  CONSTRAINT `bandwidth_ibfk_3` FOREIGN KEY (`charging_rules_uuid`) REFERENCES `charging_rules` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='带宽表';
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('55', NULL, '带宽', '99', '/bandwidth', NULL, 'bandwidth');
+----20160919 end ------
+-----20160921 start--------
+盛义东增加了系统参数内存比例能
+INSERT INTO `sysconfig` VALUES ('24', '内存比例', 'mem_proportion', '1.5');
+盛义东修改了计费规则单价字段信息
+ALTER TABLE `charging_rules` MODIFY COLUMN `price` double(11,3) NOT NULL COMMENT '单价';
+ALTER TABLE `unit_price` MODIFY COLUMN `price` double(11,3) NOT NULL COMMENT '单价';
+王建昌变更带宽表
+DROP TABLE  `bandwidth`;
+CREATE TABLE `bandwidth` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `name` varchar(64) DEFAULT NULL COMMENT '名称',
+  `description` varchar(300) DEFAULT NULL COMMENT '描述',
+  `type` varchar(4) DEFAULT NULL COMMENT '类型（1、流量，2带宽）',
+  `size` double(11,0) DEFAULT NULL COMMENT '流量/带宽大小',
+  `time_long` int(11) DEFAULT NULL COMMENT '时长',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `due_time` datetime DEFAULT NULL COMMENT '到期时间',
+  `user_uuid` varchar(128) DEFAULT NULL COMMENT '所属用户',
+  `order_uuid` varchar(128) DEFAULT NULL COMMENT '所属订单',
+  `charging_rules_uuid` varchar(128) DEFAULT NULL COMMENT '计费规则',
+  PRIMARY KEY (`uuid`),
+  KEY `user_uuid` (`user_uuid`),
+  KEY `order_uuid` (`order_uuid`),
+  KEY `charging_rules_uuid` (`charging_rules_uuid`),
+  CONSTRAINT `bandwidth_ibfk_1` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`),
+  CONSTRAINT `bandwidth_ibfk_2` FOREIGN KEY (`order_uuid`) REFERENCES `order_info` (`uuid`),
+  CONSTRAINT `bandwidth_ibfk_3` FOREIGN KEY (`charging_rules_uuid`) REFERENCES `charging_rules` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='带宽表';
+-----20160921 end--------
+-----20160922 start--------
+盛义东修改了充值记录表字段信息
+ALTER TABLE `recharge_record` MODIFY COLUMN `money` double(11,2) NOT NULL COMMENT '充值金额';
+-----20160922 end--------
+
+
+-----20160923 start--------
+吴小铎增加系统参数，发邮件功能参数
+INSERT INTO `sysconfig` VALUES ('25', '邮件服务器', 'mail_host', 'mail.btv.com.cn');
+INSERT INTO `sysconfig` VALUES ('26', '邮件发送人', 'mail_sender', 'btvjk@btv.com.cn');
+INSERT INTO `sysconfig` VALUES ('27', '邮件发送用户名', 'mail_sender_name', 'btvjjk@btv.com.cn');
+INSERT INTO `sysconfig` VALUES ('28', '邮件发送密码', 'mail_sender_password', 'btv.jiankong');
+-----20160923 end--------
+
+-----20160928 start--------
+孙超增加日结账单表
+CREATE TABLE `charge_detail_day` (
+  `uuid` varchar(128) NOT NULL,
+  `charge_detail_id` varchar(128) DEFAULT NULL COMMENT '计费详情uuid',
+  `statistic_date` varchar(10) DEFAULT NULL COMMENT '统计日期，格式为yyyy-dd-mm',
+  `cost` decimal(18,9) DEFAULT '0.000000000' COMMENT '当天消费金额',
+  PRIMARY KEY (`uuid`),
+  KEY `fk_charge_detail_uuid` (`charge_detail_id`),
+  CONSTRAINT `fk_charge_detail_uuid` FOREIGN KEY (`charge_detail_id`) REFERENCES `charge_detail` (`uuid`)
+);
+-----20160928 end--------
+-----20160929 start--------
+盛义东增加历史账单权限
+INSERT INTO `sys_module` VALUES ('56', NULL, '历史账单', 99, '/chargeDetailDay', NULL, 'chargeDetailDay');
+-----20160929 end--------
+
+
+
+-----20160929 start--------
+吴小铎增加邮件表
+CREATE TABLE `mail_information` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `host` varchar(128) DEFAULT NULL COMMENT '服务器地址',
+  `sender` varchar(128) DEFAULT NULL COMMENT '发件人的邮箱',
+  `receiver` varchar(128) DEFAULT NULL COMMENT '收件人的邮箱',
+  `name` varchar(128) DEFAULT NULL COMMENT '发件人昵称',
+  `user_name` varchar(128) DEFAULT NULL COMMENT '账号',
+  `password` varchar(128) DEFAULT NULL COMMENT '密码',
+  `subject` varchar(128) DEFAULT NULL COMMENT '邮件主题',
+  `message` varchar(256) DEFAULT NULL COMMENT '邮件信息(支持HTML)',
+  `send_state` int(2) DEFAULT NULL COMMENT '邮件发送状态 0未发送 1为成功 2为失败',
+  `send_time` datetime DEFAULT NULL COMMENT '邮件发送时间',
+  `send_num` int(2) DEFAULT NULL COMMENT '邮件次数',
+  `user_uuid` varchar(128) DEFAULT NULL COMMENT '用户ID',
+  `resource_uuid` varchar(128) DEFAULT NULL COMMENT '资源ID',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-----20160929 start--------
+吴小铎增加系统参数，发邮件功能参数
+
+-----20161009 start--------
+王建昌增加nginx配置文件 default.conf
+upstream ftcloud{
+	server 127.0.0.1:8080;
+	keepalive 10;
+}
+upstream ftcloud-self{
+    server 127.0.0.1:8030;
+    keepalive 10;
+}
+upstream vnc{
+    server 127.0.0.1:20061;
+    keepalive 10;
+}
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+server {
+    listen       80;
+    server_name  localhost;
+
+    #charset koi8-r;
+    #access_log  /var/log/nginx/log/host.access.log  main;
+
+    location / {
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+    }
+	location /ftcloud-web {
+        proxy_pass    http://ftcloud;
+        proxy_http_version 1.1;
+        proxy_redirect off;
+        proxy_set_header Upgrade $http_upgrade;
+	    proxy_set_header Connection $connection_upgrade;
+    }
+	location /ftcloud-web-self {
+        proxy_pass    http://ftcloud-self;
+        proxy_http_version 1.1;
+        proxy_redirect off;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+    }
+
+    location /cloud {
+         root /usr/local/ftcloud/ui; 
+         index  login.html;
+         rewrite "^/ftcloud/index.html$" /ftcloud/login.html last; 
+    }
+	location /images {
+         root /usr/local/ftcloud/upload;
+         # rewrite "^(.*)/admin/login.html$" $1/admin/login.html break;
+         # rewrite "^(.*)/console/login.html$" $1/login.html redirect;
+    } 
+  	location /vnc {
+        proxy_pass    http://vnc/..;
+        proxy_http_version 1.1;
+        proxy_redirect off;
+        proxy_read_timeout 86400;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+    } 
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+-----20161009 end-----
+
+
+
+
+-----20161101 start--------
+吴小铎增加机构表
+CREATE TABLE `department_information` (
+  `uuid` varchar(128) NOT NULL DEFAULT '' COMMENT '唯一标识',
+  `department_id` varchar(128) DEFAULT NULL COMMENT '部门ID',
+  `name` varchar(128) DEFAULT NULL COMMENT '部门名称',
+  `code` varchar(128) DEFAULT NULL COMMENT '部门编码',
+  `parent_code` varchar(128) DEFAULT NULL COMMENT '上级部门编码',
+  `synch` int(2) DEFAULT '0' COMMENT '是否同步的',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `department_quota_uuid` varchar(128) DEFAULT NULL,
+  `description` varchar(256) DEFAULT NULL COMMENT '描述',
+  PRIMARY KEY (`uuid`),
+  KEY `fk_depart_quota` (`department_quota_uuid`),
+  CONSTRAINT `fk_depart_quota` FOREIGN KEY (`department_quota_uuid`) REFERENCES `department_quota` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+CREATE TABLE `department_quota` (
+  `uuid` varchar(128) NOT NULL DEFAULT '' COMMENT '机构表ID',
+  `vm` int(10) DEFAULT NULL COMMENT '虚拟机配额',
+  `pm` int(10) DEFAULT NULL COMMENT '物理机配额',
+  `lb` int(10) DEFAULT NULL COMMENT '负载均载配额',
+  `storage` int(10) DEFAULT NULL COMMENT '存储配额',
+  `vm_used` int(10) DEFAULT NULL COMMENT '虚拟机使用',
+  `pm_used` int(10) DEFAULT NULL COMMENT '物理机使用',
+  `lb_used` int(10) DEFAULT NULL COMMENT '负载均载使用',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `sys_user` ADD COLUMN `department_uuid`  varchar(128) NULL COMMENT '外键关联机构表' AFTER `foreign_ref`;
+-----20161101 start--------
+吴小铎增加机构表
+王建昌增加logo管理功能
+-----20161102 start--------
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('57', NULL, '系统Logo管理', '99', '/systemLogo', NULL, 'systemLogo');
+-----20161102 end--------
+盛义东云主机明细增加GPU属性
+-----20161114 start--------
+ALTER TABLE `instance_info_detail` ADD COLUMN `gpu_enbl`  int(2) NULL COMMENT '是否设置GPU图像处理' AFTER `computer_name`;
+-----20161114 end--------
+王建昌增加物理机部署功能
+-----20161114 start------
+CREATE TABLE `pxe_server` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `name` varchar(128) DEFAULT NULL COMMENT '服务器名称',
+  `ip_address` varchar(128) DEFAULT NULL COMMENT 'ip地址',
+  `port` int(11) DEFAULT NULL COMMENT '端口',
+  `os_type` int(4) DEFAULT NULL COMMENT '系统类型：0 linux, 1 windows',
+  `domain` varchar(128) DEFAULT NULL COMMENT '域，windows有效',
+  `domain_account` varchar(128) DEFAULT NULL COMMENT '域账户，windows有效',
+  `domain_password` varchar(128) DEFAULT NULL COMMENT '域密码，windows有效',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `operating_system` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `type` int(4) DEFAULT NULL COMMENT '系统类型(0 Linux, 1 Windows)',
+  `version` varchar(128) DEFAULT NULL COMMENT '操作系统版本号',
+  `name` varchar(128) DEFAULT NULL COMMENT '名称',
+  `product_key` varchar(128) DEFAULT NULL COMMENT '产品密钥',
+  `activation_code` varchar(128) DEFAULT NULL COMMENT '激活码',
+  `answer_file` varchar(128) DEFAULT NULL COMMENT '应答文件',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `physical_machine_deploy` (
+  `uuid` varchar(128) CHARACTER SET utf8 NOT NULL COMMENT '唯一标识',
+  `name` varchar(128) CHARACTER SET utf8 DEFAULT NULL COMMENT '名称',
+  `admin_password` varchar(128) CHARACTER SET utf8 DEFAULT NULL COMMENT '管理员密码',
+  `username` varchar(128) CHARACTER SET utf8 DEFAULT NULL COMMENT '用户名',
+  `password` varchar(128) CHARACTER SET utf8 DEFAULT NULL COMMENT '密码',
+  `disk_size` double DEFAULT NULL COMMENT '系统盘大小',
+  `domain` varchar(128) CHARACTER SET utf8 DEFAULT NULL COMMENT '域',
+  `domain_account` varchar(128) CHARACTER SET utf8 DEFAULT NULL COMMENT '域账号',
+  `domain_password` varchar(128) CHARACTER SET utf8 DEFAULT NULL COMMENT '域密码',
+  `deploy_time` datetime DEFAULT NULL COMMENT '部署时间',
+  `state` int(4) NOT NULL COMMENT '状态：1部署中，2完成',
+  `physical_machine_uuid` varchar(128) CHARACTER SET utf8 DEFAULT NULL,
+  `pxe_server_uuid` varchar(128) CHARACTER SET utf8 DEFAULT NULL,
+  `operating_system_uuid` varchar(128) CHARACTER SET utf8 DEFAULT NULL,
+  PRIMARY KEY (`uuid`,`state`),
+  KEY `physical_machine_uuid` (`physical_machine_uuid`),
+  KEY `pxe_server_uuid` (`pxe_server_uuid`),
+  KEY `operating_system_uuid` (`operating_system_uuid`),
+  CONSTRAINT `physical_machine_deploy_ibfk_1` FOREIGN KEY (`physical_machine_uuid`) REFERENCES `physical_machine` (`uuid`),
+  CONSTRAINT `physical_machine_deploy_ibfk_2` FOREIGN KEY (`pxe_server_uuid`) REFERENCES `pxe_server` (`uuid`),
+  CONSTRAINT `physical_machine_deploy_ibfk_3` FOREIGN KEY (`operating_system_uuid`) REFERENCES `operating_system` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+ALTER TABLE `physical_machine`
+DROP COLUMN `username`,
+DROP COLUMN `password`,
+CHANGE COLUMN `ip` `ip_address`  varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '该物理机的IP地址' AFTER `name`,
+MODIFY COLUMN `mac`  varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '物理机的mac地址' AFTER `ip_address`,
+MODIFY COLUMN `state`  int(4) NULL DEFAULT NULL COMMENT '状态：0：异常，1：创建中，2：运行，3:  修改中，4：开机中，5：关机中，6：已关机，7：重启中，8：已删除，9部署中' AFTER `mac`,
+MODIFY COLUMN `charging_rules_uuid`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '计费规则' AFTER `delete_time`,
+ADD COLUMN `dns`  varchar(64) NULL COMMENT '该物理机的dns' AFTER `ip_address`,
+ADD COLUMN `gateway`  varchar(64) NULL COMMENT '该物理机的网关' AFTER `dns`,
+ADD COLUMN `username`  varchar(128) NULL COMMENT '物理机的用户名' AFTER `gateway`,
+ADD COLUMN `password`  varchar(128) NULL COMMENT '物理机的密码' AFTER `username`,
+ADD COLUMN `netmask`  varchar(64) NULL COMMENT '物理机的子网掩码' AFTER `password`,
+ADD COLUMN `ipmi_ip`  varchar(64) NULL COMMENT 'ipmi的ip地址' AFTER `mac`,
+ADD COLUMN `ipmi_account`  varchar(64) NULL COMMENT 'ipmi的账号' AFTER `ipmi_ip`,
+ADD COLUMN `ipmi_password`  varchar(64) NULL COMMENT 'ipmi的密码' AFTER `ipmi_account`;
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('58', NULL, 'PXE服务器', '99', '/pxe', NULL, 'pxe');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('59', NULL, '操作系统', '99', '/operatingSystem', NULL, 'operatingSystem');
+----20161114 end ----
+
+
+-----20161116 start--------
+吴小铎更改iaas,paas,saas初始华数据
+INSERT INTO `resource_display` VALUES ('1', 'Windows 2008 R2 企业版 64位', '2008', 'Iaas', 'windows.png', NULL);
+INSERT INTO `resource_display` VALUES ('10', 'CentOS 7.2 64Bit', '7.2', 'Iaas', 'centos.png', NULL);
+INSERT INTO `resource_display` VALUES ('11', 'openSUSE 11 64Bit', '11', 'Iaas', 'os_suse.png', NULL);
+INSERT INTO `resource_display` VALUES ('12', 'openSUSE 11 64Bit', '12.3', 'Iaas', 'os_suse.png', NULL);
+INSERT INTO `resource_display` VALUES ('13', 'Tomcat 7', 'java', 'Paas', 'tomcat.png', NULL);
+INSERT INTO `resource_display` VALUES ('14', 'MySql 5', 'other', 'Paas', 'mysql.png', NULL);
+INSERT INTO `resource_display` VALUES ('15', '快编', 'kb', 'Saas', 'icon_kb.png', 'VM0109880900,CPU:4核  内存8G  硬盘:100G,40000;VM0109880901,CPU:2核  内存4G  硬盘:100G,20000;');
+INSERT INTO `resource_display` VALUES ('16', '负载均衡', 'lb', 'Saas', 'loadblance.png', 'VM0109880900,CPU:4核  内存8G  硬盘:100G,40000;VM0109880901,CPU:2核  内存4G  硬盘:100G,20000;');
+INSERT INTO `resource_display` VALUES ('17', '转码', 'zb', 'Saas', 'zhuanma.png', NULL);
+INSERT INTO `resource_display` VALUES ('18', '闪编', 'sb', 'Saas', 'icon_sb.png', 'VM0109880900,CPU:4核  内存8G  硬盘:100G,40000;VM0109880901,CPU:2核  内存4G  硬盘:100G,20000;');
+INSERT INTO `resource_display` VALUES ('19', 'nginx 1.8.0', 'other', 'Paas', 'nginx.png', NULL);
+INSERT INTO `resource_display` VALUES ('2', 'Windows 2012 R2 简体中文 64位', '2012', 'Iaas', 'windows.png', NULL);
+INSERT INTO `resource_display` VALUES ('20', 'redis ', 'other', 'Paas', 'redis.png', NULL);
+INSERT INTO `resource_display` VALUES ('21', 'RabbitMQ 3.5.0', 'other', 'Paas', 'rabbitmq.png', NULL);
+INSERT INTO `resource_display` VALUES ('22', 'JAVA运行环境（Ubuntu 64位 | JDK1.7） ', 'java', 'Paas', 'java_jdk.png', NULL);
+INSERT INTO `resource_display` VALUES ('23', 'JAVA运行环境（Windows2008 64位 | JDK1.7 | Tomcat7.0）', 'java', 'Paas', 'java_tomcat.png', NULL);
+INSERT INTO `resource_display` VALUES ('24', 'JAVA运行环境（CentOS7.2 64位 | Nginx | Tomcat7 | JDK1.7）', 'java', 'Paas', 'java_tomcat.png', NULL);
+INSERT INTO `resource_display` VALUES ('25', 'JAVA运行环境 (Tomcat8,MySQL5.5,Windows)', 'java', 'Paas', 'java_tomcat.png', NULL);
+INSERT INTO `resource_display` VALUES ('26', 'JAVA运行环境（Windows2012 64位 Tomcat8 | JDK1.8 | MySQL 5.6 )', 'java', 'Paas', 'java_tomcat.png', NULL);
+INSERT INTO `resource_display` VALUES ('27', 'JAVA运行环境（CentOS7.2 64位 Tomcat7 | JDK1.7 | MySQL5.5 )', 'java', 'Paas', 'java_tomcat.png', NULL);
+INSERT INTO `resource_display` VALUES ('28', 'JAVA运行环境（Centos 64位 | JDK1.7 | Jboss7.1）', 'java', 'Paas', 'java_jboss.png', NULL);
+INSERT INTO `resource_display` VALUES ('29', 'JAVA运行环境 (Apache Nginx Weblogic8/9 CentOS 6.5）', 'java', 'Paas', 'java_weblogic.png', NULL);
+INSERT INTO `resource_display` VALUES ('3', 'Windows 7', '7', 'Iaas', 'windows.png', NULL);
+INSERT INTO `resource_display` VALUES ('30', 'ASP/.NET运行环境（Windows2008 64位 | IIS7.0）', 'asp', 'Paas', 'asp.png', NULL);
+INSERT INTO `resource_display` VALUES ('31', '多语言环境（CentOS6.5 64位 | Nginx | PHP | JAVA）', 'other', 'Paas', 'php.png', NULL);
+INSERT INTO `resource_display` VALUES ('32', '多语言环境（Win2008 64位 | Python | Perl | Ruby）', 'other', 'Paas', 'ruby.png', NULL);
+INSERT INTO `resource_display` VALUES ('33', '多语言环境（Centos 64位 | Python | Perl | Ruby | Erlang ）', 'other', 'Paas', 'erlang.png', NULL);
+INSERT INTO `resource_display` VALUES ('34', 'Nodejs集成环境 ( CentOS7.0 64位 Apache | Nodejs | Python | Redis )', 'other', 'Paas', 'nodejs.png', NULL);
+INSERT INTO `resource_display` VALUES ('35', 'Nodejs集成环境 ( Win2012 64位 Apache | Nodejs | Python | Redis )', 'other', 'Paas', 'nodejs.png', NULL);
+INSERT INTO `resource_display` VALUES ('36', 'Django框架（Linux15.1 64位）', 'other', 'Paas', 'django.png', NULL);
+INSERT INTO `resource_display` VALUES ('37', 'Django框架（Windows2012 64位）', 'other', 'Paas', 'django.png', NULL);
+INSERT INTO `resource_display` VALUES ('38', '数据库 Oracle 11G', 'other', 'Paas', 'oracle.png', NULL);
+INSERT INTO `resource_display` VALUES ('39', '数据库 MySql 5.5', 'other', 'Paas', 'mysql.png', NULL);
+INSERT INTO `resource_display` VALUES ('4', 'Windows 8.1', '8.1', 'Iaas', 'windows.png', NULL);
+INSERT INTO `resource_display` VALUES ('40', '数据库 Oracle 10G', 'other', 'Paas', 'oracle.png', NULL);
+INSERT INTO `resource_display` VALUES ('41', '数据库 SQL Server 2008', 'other', 'Paas', 'sqlserver.png', NULL);
+INSERT INTO `resource_display` VALUES ('42', '数据库 MongoDB 3.0.2', 'other', 'Paas', 'mongodb.png', NULL);
+INSERT INTO `resource_display` VALUES ('43', 'PHP运行环境（CentOS7.2 64位 | Nginx | PHP5.3）', 'php', 'Paas', 'php_nginx.png', NULL);
+INSERT INTO `resource_display` VALUES ('44', 'PHP运行环境(Centos6.5 64位|nginx|php多版本|mysql)', 'php', 'Paas', 'php_nginx.png', NULL);
+INSERT INTO `resource_display` VALUES ('45', 'PHP运行环境（Windows2012 64位 Apache | MySQL | PHP ）', 'php', 'Paas', 'php_apache.png', NULL);
+INSERT INTO `resource_display` VALUES ('46', 'PHP运行环境（CentOS7.2 64位 | Apache | PHP多版本）', 'php', 'Paas', 'php_apache.png', NULL);
+INSERT INTO `resource_display` VALUES ('47', 'PHP运行环境（Windows2008 64位 Nginx | MySQL | PHP )', 'php', 'Paas', 'php_nginx.png', NULL);
+INSERT INTO `resource_display` VALUES ('5', 'CentOS 6.3 64Bit', '6.3', 'Iaas', 'centos.png', NULL);
+INSERT INTO `resource_display` VALUES ('50', 'FOR CDN（Windows2008 64位 | IIS7.0）', 'asp', 'Pass', 'asp.png', NULL);
+INSERT INTO `resource_display` VALUES ('51', 'Windows2008 64位 | IIS7.0', 'asp', 'Pass', 'asp.png', NULL);
+INSERT INTO `resource_display` VALUES ('52', 'Windows2012_R2_64位ASP|PHP|ASP.NET', 'asp', 'Pass', 'asp.png', NULL);
+INSERT INTO `resource_display` VALUES ('6', 'CentOS 6.4 64Bit', '6.4', 'Iaas', 'centos.png', NULL);
+INSERT INTO `resource_display` VALUES ('7', 'CentOS 6.5 64Bit', '6.5', 'Iaas', 'centos.png', NULL);
+INSERT INTO `resource_display` VALUES ('8', 'CentOS 6.6 64Bit', '6.6', 'Iaas', 'centos.png', NULL);
+INSERT INTO `resource_display` VALUES ('9', 'CentOS 7 64Bit', '7', 'Iaas', 'centos.png', NULL);
+-----20161116 end--------
+吴小铎更改初始华数据
+盛义东消费记录权限与历史账单权限修改
+-----20161117 start--------
+UPDATE sys_module SET `name` = '新开资源统计' where uuid = '37';
+UPDATE sys_module SET `name` = '资源消费记录统计' where uuid = '56';
+-----20161117 end--------
+王建昌修改物理机和部署表
+-----20161117 start--------
+ALTER TABLE `physical_machine_deploy` DROP FOREIGN KEY `physical_machine_deploy_ibfk_1`;
+ALTER TABLE `physical_machine_deploy`
+DROP COLUMN `physical_machine_uuid`,
+DROP INDEX `physical_machine_uuid`;
+ALTER TABLE `physical_machine_deploy` ADD INDEX (`uuid`);
+ALTER TABLE `physical_machine`
+ADD COLUMN `physical_machine_deploy_uuid`  varchar(128) NULL AFTER `charging_rules_uuid`;
+ALTER TABLE `physical_machine` ADD CONSTRAINT `physical_machine_ibfk_8` FOREIGN KEY (`physical_machine_deploy_uuid`) REFERENCES `physical_machine_deploy` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+-----20161117 end------
+
+
+-----20161121 start--------
+吴小铎增加弹性伸缩系统密码字段
+ALTER TABLE `elastic_gen_config` ADD COLUMN `system_password`  varchar(128) NULL COMMENT '系统密码' AFTER `disk_size`;
+-----20161121 end--------
+吴小铎增加弹性伸缩系统密码字段
+
+王建昌添加性能分布
+-----20161124 start-----
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('60', NULL, '性能分布', '99', '/distributed', NULL, 'distributed');
+-----20161124 end-------
+盛义东添加license管理
+-----20161208 start-----
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('61', NULL, 'license管理', '99', '/license', NULL, 'license');
+-----20161208 end-------
+盛义东添加云主机生命周期表
+-----20161214 start-----
+CREATE TABLE `instance_life_cycle` (
+  `uuid` varchar(128) NOT NULL DEFAULT '' COMMENT '主键',
+  `instance_uuid` varchar(128) NOT NULL COMMENT '云主机编号',
+  `action` int(11) NOT NULL COMMENT '动作(1:创建云主机，2：删除云主机，3：修改云主机)',
+  `cpu` int(11) NOT NULL DEFAULT '0' COMMENT 'CPU变化量',
+  `mem` double(11,2) NOT NULL DEFAULT '0.00' COMMENT '内存变化量',
+  `disk` double(11,2) NOT NULL DEFAULT '0.00' COMMENT '硬盘变化量',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`),
+  KEY `instance_uuid` (`instance_uuid`),
+  CONSTRAINT `instance_life_cycle_ibfk_1` FOREIGN KEY (`instance_uuid`) REFERENCES `instance_info` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-----20161214 end-------
+王建昌修改系统模块数据
+-----20161213 start-----
+update sys_module set url='/licence',sn='licence' where uuid = '61';
+-----20161213 end-------
+王建昌添加系统模块
+-----20161215 start-----
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('63', NULL, '时间段性能分布情况', '99', '/timesDistributed', NULL, 'timesDistributed');
+-----20161215 end-------
+盛义东添加系统参数数据系统名称
+-----20161215 start-----
+INSERT INTO `sysconfig` VALUES ('29', '系统名称', 'system_name', '运营管理平台');
+-----20161215 end-------
+盛义东添加云主机每日数量统计表
+-----20161219 start-----
+CREATE TABLE `instance_num` (
+  `uuid` varchar(128) NOT NULL,
+  `statistic_date` varchar(10) NOT NULL COMMENT '统计日期yyyy-mm-dd',
+  `business_uuid` varchar(128) DEFAULT NULL,
+  `instance_num` int(11) NOT NULL COMMENT '云主机数量',
+  PRIMARY KEY (`uuid`),
+  KEY `business_uuid` (`business_uuid`),
+  CONSTRAINT `instance_num_ibfk_1` FOREIGN KEY (`business_uuid`) REFERENCES `business` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-----20161219 end-------
+王建昌修改物理机表结构
+-----20161215 start----
+ALTER TABLE `physical_machine_deploy`
+ADD COLUMN `complet_time`  datetime NULL DEFAULT NULL COMMENT '完成时间' AFTER `domain_password`;
+-----20161215 end----
+王建昌添加资源框架
+-----20161219 start----
+CREATE TABLE `resource_frame` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `id` varchar(128) DEFAULT NULL,
+  `itype` int(4) DEFAULT NULL COMMENT '图像类型 1:instance, 2:conp, 3,link',
+  `x` int(11) DEFAULT NULL COMMENT 'x坐标',
+  `y` int(11) DEFAULT NULL COMMENT 'y坐标',
+  `image` varchar(300) DEFAULT NULL COMMENT '图片路径',
+  `zindex` int(11) DEFAULT NULL COMMENT '层次',
+  `resource_uuid` varchar(128) DEFAULT NULL COMMENT '设备的UUID',
+  `otype` int(11) DEFAULT NULL COMMENT '1:rack, 2:bladecenter, 3:host, 4:mimiMachine, 5:physicalMachine, 6:systemStorage, 7:cloudStorage',
+  `sn` int(11) DEFAULT NULL COMMENT '控制点序号',
+  `form_sn` int(11) DEFAULT NULL COMMENT '开始点sn',
+  `to_sn` int(11) DEFAULT NULL COMMENT '结束点sn',
+  `lw` int(11) DEFAULT NULL COMMENT '线的宽度',
+  `ars` int(11) DEFAULT NULL COMMENT '有无箭头',
+  `stc` varchar(128) DEFAULT NULL COMMENT '线的颜色',
+  `dp` int(4) DEFAULT NULL COMMENT '0:实线, 5：虚线',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-----20161219 end----
+
+-----20161219 start----
+孙超添加
+viconfig.properties中的sync.interval.adapterStorage改为sync.interval.cluster
+-----20161219 end----
+王建昌新加
+-----20161222 start----
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('64', NULL, '资源架构', '99', '/resourceFrame', NULL, 'resourceFrame');
+-----20161222 end----
+王建昌新加
+----20161227 start----
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('65', NULL, '存储配置项', '99', '/ciStorage', NULL, 'ciStorage');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('67', NULL, '供电环控配置项', '99', '/ciGdhk', NULL, 'ciGdhk');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('68', NULL, '机房配置项', '99', '/ciJf', NULL, 'ciJf');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('69', NULL, '集群配置项', '99', '/ciCluster', NULL, 'ciCluster');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('70', NULL, '逻辑服务器配置项', '99', '/ciLogicServer', NULL, 'ciLogicServer');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('71', NULL, '数据库配置项', '99', '/ciDataBase', NULL, 'ciDataBase');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('72', NULL, '网络设备配置项', '99', '/ciNetworkDevice', NULL, 'ciNetworkDevice');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('73', NULL, '物理服务器配置项', '99', '/ciPhysicalServer', NULL, 'ciPhysicalServer');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('74', NULL, '应用系统配置项', '99', '/ciApplication', NULL, 'ciApplication');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('75', NULL, '中间件配置置项', '99', '/ciMiddleware', NULL, 'ciMiddleware');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('76', NULL, '拓扑展示', '99', '/ciTopo', NULL, 'ciTopo');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('77', NULL, '机柜', '99', '/ciRack', NULL, 'ciRack');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('78', NULL, '变更记录', '99', '/ciChain', NULL, 'ciChain');
+----20161227 end ----
+盛义东添加
+----20161228 start----
+INSERT INTO `columns` VALUES ('34', '任务', 'task', 1, 34, 100);
+----20161228 end ----
+盛义东添加
+----20170103 start----
+INSERT INTO `sys_module` VALUES ('65', NULL, '存储配置项', 99, '/ciStorage', NULL, 'ciStorage');
+INSERT INTO `sys_module` VALUES ('67', NULL, '供电环控配置项', 99, '/ciGdhk', NULL, 'ciGdhk');
+INSERT INTO `sys_module` VALUES ('68', NULL, '机房配置项', 99, '/ciJf', NULL, 'ciJf');
+INSERT INTO `sys_module` VALUES ('69', NULL, '集群配置项', 99, '/ciCluster', NULL, 'ciCluster');
+INSERT INTO `sys_module` VALUES ('70', NULL, '逻辑服务器配置项', 99, '/ciLogicServer', NULL, 'ciLogicServer');
+INSERT INTO `sys_module` VALUES ('71', NULL, '数据库配置项', 99, '/ciDataBase', NULL, 'ciDataBase');
+INSERT INTO `sys_module` VALUES ('72', NULL, '网络设备配置项', 99, '/ciNetworkDevice', NULL, 'ciNetworkDevice');
+INSERT INTO `sys_module` VALUES ('73', NULL, '物理服务器配置项', 99, '/ciPhysicalServer', NULL, 'ciPhysicalServer');
+INSERT INTO `sys_module` VALUES ('74', NULL, '应用系统配置项', 99, '/ciApplication', NULL, 'ciApplication');
+INSERT INTO `sys_module` VALUES ('75', NULL, '中间件配置置项', 99, '/ciMiddleware', NULL, 'ciMiddleware');
+INSERT INTO `sys_module` VALUES ('76', NULL, '拓扑展示 ', 99, '/ciTopo', NULL, 'ciTopo');
+INSERT INTO `sys_module` VALUES ('77', NULL, '机柜', 99, '/ciRack', NULL, 'ciRack');
+INSERT INTO `sys_module` VALUES ('78', NULL, '变更记录', 99, '/ciChain', NULL, 'ciChain');
+INSERT INTO `sys_module` VALUES ('79', NULL, '配置项关系', 99, '/ciRelation', NULL, 'ciRelation');
+CREATE TABLE `ci_relation` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_a` varchar(14) NOT NULL COMMENT '配置项A',
+  `ci_b` varchar(14) NOT NULL COMMENT '配置项B',
+  `rl_desc` varchar(64) DEFAULT NULL COMMENT '配置项关系描述',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_jf` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `city` varchar(20) NOT NULL COMMENT '城市',
+  `location` varchar(80) NOT NULL COMMENT '地点',
+  `floor` int(2) NOT NULL COMMENT '楼层',
+  `area` double(11,2) DEFAULT NULL COMMENT '面积',
+  `description` varchar(80) DEFAULT NULL COMMENT '主要用途',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_rack` (
+  `uuid` varchar(128) NOT NULL,
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL,
+  `position` varchar(20) NOT NULL,
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `model` varchar(64) NOT NULL COMMENT '设备型号',
+  `power1` varchar(64) DEFAULT NULL COMMENT '第一路电源',
+  `power2` varchar(64) DEFAULT NULL COMMENT '第二路电源',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL,
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170103 end ----
+王建昌新加
+----20170105start ----
+CREATE TABLE `network` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一 标识',
+  `name` varchar(255) DEFAULT NULL COMMENT '名称',
+  `cidr` varchar(18) DEFAULT NULL COMMENT 'CIDR',
+  `gateway` varchar(15) DEFAULT NULL COMMENT '网关',
+  `ip_assign_mode` int(4) DEFAULT NULL COMMENT 'IP分配方式：1.静态，2.动态',
+  `ip_range` varchar(512) DEFAULT NULL COMMENT '可以有多个段组成，每个段由起始ip组成，中间由‘-’分割；多个段之间由‘，’分割，例如：192.168.1.2-192.168.1.10，192.168.1.100-192.168.1.200',
+  `dns` varchar(128) DEFAULT NULL,
+  `state` int(4) DEFAULT NULL COMMENT '0、不可用，1、可用，2、操作中',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='新网络表';
+CREATE TABLE `network_device` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `name` varchar(255) DEFAULT NULL COMMENT '名称',
+  `physical_device` varchar(255) DEFAULT NULL COMMENT '物理设备名称',
+  `hypervisor_server_container_uuid` varchar(128) DEFAULT NULL COMMENT '连接配置uuid',
+  `maintenance_type` int(4) DEFAULT NULL COMMENT '维护方式 1：人工；2：同步',
+  `foreign_ref` varchar(128) DEFAULT NULL COMMENT '外键',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `network_scop` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `network_uuid` varchar(128) DEFAULT NULL COMMENT '关联网络的uuid',
+  `hypervisor_server_container_uuid` varchar(128) DEFAULT NULL COMMENT '关联链接配置的uuid',
+  `net_device_type` int(4) DEFAULT NULL COMMENT '网络设备类型：vlan(1) , vxlan(2)',
+  `net_device_uuid` varchar(128) DEFAULT NULL COMMENT '网络设备uuid',
+  `vlanid` int(4) DEFAULT NULL COMMENT 'vlanid',
+  `foreign_ref` varchar(128) DEFAULT NULL COMMENT '外键',
+  `state` int(4) DEFAULT NULL COMMENT '状态：0.异常；1.正常；2.已删除；3.创建中；4.修改中；5.删除中',
+  PRIMARY KEY (`uuid`),
+  KEY `network_uuid` (`network_uuid`),
+  KEY `hypervisor_server_container_uuid` (`hypervisor_server_container_uuid`),
+  KEY `net_device_uuid` (`net_device_uuid`),
+  CONSTRAINT `network_scop_ibfk_1` FOREIGN KEY (`network_uuid`) REFERENCES `network` (`uuid`),
+  CONSTRAINT `network_scop_ibfk_2` FOREIGN KEY (`hypervisor_server_container_uuid`) REFERENCES `hypervisor_server_container` (`uuid`),
+  CONSTRAINT `network_scop_ibfk_3` FOREIGN KEY (`net_device_uuid`) REFERENCES `network_device` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('80', NULL, '网络', '99', '/networks', NULL, 'networks');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('81', NULL, '网络设备', '99', '/networkDevice', NULL, 'networkDevice');
+----20170105 end----
+盛义东添加
+----20170109 start----
+CREATE TABLE `ci_gdhk` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `sn` varchar(64) DEFAULT NULL COMMENT '序列号',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_physical_server` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `sn` varchar(64) NOT NULL COMMENT '序列号',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `microcode_version` varchar(64) DEFAULT NULL COMMENT '微码版本',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_network_device` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `sn` varchar(64) NOT NULL COMMENT '序列号',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `ios_version` varchar(64) DEFAULT NULL COMMENT 'IOS版本',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `network_type` varchar(64) DEFAULT NULL COMMENT '网络类别',
+  `network_area` varchar(64) DEFAULT NULL COMMENT '网络区域',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_storage` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `sn` varchar(64) NOT NULL COMMENT '序列号',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `alcapacity` varchar(8) DEFAULT NULL COMMENT '设备容量',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170109 end----
+王建昌添加
+----20170109 start----
+CREATE TABLE `ip_pool` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `ip_address` varchar(64) DEFAULT NULL COMMENT 'ip地址',
+  `state` int(4) DEFAULT NULL COMMENT '状态：1未分配，2已分配',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `network_uuid` varchar(128) DEFAULT NULL COMMENT '关联网络',
+  PRIMARY KEY (`uuid`),
+  KEY `network_uuid` (`network_uuid`),
+  CONSTRAINT `ip_pool_ibfk_1` FOREIGN KEY (`network_uuid`) REFERENCES `network` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='ip池';
+----20170109 end----
+盛义东添加
+----20170110 start----
+CREATE TABLE `ci_cluster` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `ip` varchar(64) NOT NULL COMMENT 'IP地址',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_application` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `deployment_type` varchar(16) NOT NULL COMMENT '部署类型',
+  `system_level` varchar(4) NOT NULL COMMENT '系统级别',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_logic_server` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `cpu_num` int(2) NOT NULL COMMENT 'CPU数量',
+  `memsize` int(2) NOT NULL COMMENT '内存大小',
+  `device_sn` varchar(64) NOT NULL COMMENT '所在设备序列号',
+  `storage_sn` varchar(64) NOT NULL COMMENT '外接存储序列号',
+  `ip` varchar(64) NOT NULL COMMENT 'IP地址',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_middleware` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `version` varchar(20) DEFAULT NULL COMMENT '版本',
+  `middleware_name` varchar(20) NOT NULL COMMENT '中间件名称',
+  `hostname` varchar(64) NOT NULL COMMENT '所在主机',
+  `ip` varchar(64) NOT NULL COMMENT 'IP地址',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_database` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `version` varchar(20) DEFAULT NULL COMMENT '版本',
+  `sid` varchar(16) NOT NULL COMMENT '实例名称',
+  `hostname` varchar(64) NOT NULL COMMENT '所在主机',
+  `ip` varchar(64) NOT NULL COMMENT 'IP地址',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170110 end----
+王建昌添加
+----20170112 start----
+ALTER TABLE `networks`
+MODIFY COLUMN `status`  varchar(16) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '状态值 creating,deleting,modifying,normal,exception,upleve' AFTER `name`;
+ALTER TABLE `vnet`
+ADD COLUMN `network_scop_uuid`  varchar(128) NULL AFTER `network_uuid`;
+ALTER TABLE `instance_network_relation` DROP FOREIGN KEY `instance_network_relation_ibfk_211`;
+ALTER TABLE `instance_network_relation` ADD CONSTRAINT `instance_network_relation_ibfk_211` FOREIGN KEY (`network_uuid`) REFERENCES `network` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+----20170112 end----
+
+孙超添加
+----20170116 start----
+ALTER TABLE `task_info`
+MODIFY COLUMN `job_id`  varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL AFTER `error_message`;
+----20170116 end----
+盛义东添加
+----20170118 start----
+CREATE TABLE `ci_log` (
+  `uuid` varchar(128) NOT NULL,
+  `operator_uuid` varchar(128) DEFAULT NULL COMMENT '操作的编号，只有删除时记录',
+  `name` varchar(128) NOT NULL COMMENT '配置项名称',
+  `type` int(2) NOT NULL COMMENT '类型，1：机房；2：机柜；3：供电环控；4：物理服务器；5：网络设备；6：存储；7：集群；8：逻辑服务器；9：应用系统；10：中间件；11：数据库；12：关系',
+  `operation` int(2) NOT NULL COMMENT '操作，1：添加；2：修改，3：删除，4：导入',
+  `result` int(2) DEFAULT NULL COMMENT '操作结果，1：成功；0：失败',
+  `create_time` datetime NOT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170118 end----
+盛义东添加
+----20170210 start----
+INSERT INTO `sys_module` VALUES ('84', NULL, '扩展属性', 99, '/ciExtProperty', NULL, 'ciExtProperty');
+CREATE TABLE `ci_ext_property` (
+  `uuid` varchar(128) NOT NULL,
+  `module` varchar(32) NOT NULL COMMENT '扩展表名称',
+  `property` varchar(32) NOT NULL COMMENT '属性名称',
+  `property_title` varchar(32) NOT NULL COMMENT '属性名称（显示名称）',
+  `property_sort` int(11) NOT NULL COMMENT '属性排序',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_jf_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `jf_uuid` varchar(128) NOT NULL COMMENT '机房编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `jf_uuid` (`jf_uuid`),
+  CONSTRAINT `ci_jf_ext_ibfk_1` FOREIGN KEY (`jf_uuid`) REFERENCES `ci_jf` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_rack_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `rack_uuid` varchar(128) NOT NULL COMMENT '机柜编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `rack_uuid` (`rack_uuid`),
+  CONSTRAINT `ci_rack_ext_ibfk_1` FOREIGN KEY (`rack_uuid`) REFERENCES `ci_rack` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_gdhk_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `gdhk_uuid` varchar(128) NOT NULL COMMENT '供电环控编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `gdhk_uuid` (`gdhk_uuid`),
+  CONSTRAINT `ci_gdhk_ext_ibfk_1` FOREIGN KEY (`gdhk_uuid`) REFERENCES `ci_gdhk` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_physical_server_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `physical_server_uuid` varchar(128) NOT NULL COMMENT '物理服务器编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `physical_server_uuid` (`physical_server_uuid`),
+  CONSTRAINT `ci_physical_server_ext_ibfk_1` FOREIGN KEY (`physical_server_uuid`) REFERENCES `ci_physical_server` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_network_device_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `network_device_uuid` varchar(128) NOT NULL COMMENT '网络设备编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `network_device_uuid` (`network_device_uuid`),
+  CONSTRAINT `ci_network_device_ext_ibfk_1` FOREIGN KEY (`network_device_uuid`) REFERENCES `ci_network_device` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_storage_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `storage_uuid` varchar(128) NOT NULL COMMENT '存储编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `storage_uuid` (`storage_uuid`),
+  CONSTRAINT `ci_storage_ext_ibfk_1` FOREIGN KEY (`storage_uuid`) REFERENCES `ci_storage` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_cluster_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `cluster_uuid` varchar(128) NOT NULL COMMENT '集群编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `cluster_uuid` (`cluster_uuid`),
+  CONSTRAINT `ci_cluster_ext_ibfk_1` FOREIGN KEY (`cluster_uuid`) REFERENCES `ci_cluster` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_logic_server_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `logic_server_uuid` varchar(128) NOT NULL COMMENT '逻辑服务器编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `logic_server_uuid` (`logic_server_uuid`),
+  CONSTRAINT `ci_logic_server_ext_ibfk_1` FOREIGN KEY (`logic_server_uuid`) REFERENCES `ci_logic_server` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_application_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `application_uuid` varchar(128) NOT NULL COMMENT '应用系统编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `application_uuid` (`application_uuid`),
+  CONSTRAINT `ci_application_ext_ibfk_1` FOREIGN KEY (`application_uuid`) REFERENCES `ci_application` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_middleware_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `middleware_uuid` varchar(128) NOT NULL COMMENT '中间件编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `middleware_uuid` (`middleware_uuid`),
+  CONSTRAINT `ci_middleware_ext_ibfk_1` FOREIGN KEY (`middleware_uuid`) REFERENCES `ci_middleware` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_database_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `database_uuid` varchar(128) NOT NULL COMMENT '数据库编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `database_uuid` (`database_uuid`),
+  CONSTRAINT `ci_database_ext_ibfk_1` FOREIGN KEY (`database_uuid`) REFERENCES `ci_database` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170210 end----
+盛义东添加
+----20170214 start----
+ALTER TABLE `ci_rack` MODIFY COLUMN `model` varchar(64) DEFAULT NULL COMMENT '设备型号';
+ALTER TABLE `ci_rack` ADD COLUMN `jf_uuid` varchar(128) DEFAULT NULL COMMENT '机房编号' AFTER `create_time`;
+ALTER TABLE `ci_gdhk` ADD COLUMN `jf_uuid` varchar(128) DEFAULT NULL COMMENT '机房编号' AFTER `create_time`;
+ALTER TABLE `ci_physical_server` ADD COLUMN `rack_uuid` varchar(128) DEFAULT NULL COMMENT '机柜编号' AFTER `create_time`;
+ALTER TABLE `ci_physical_server` ADD COLUMN `jf_uuid` varchar(128) DEFAULT NULL COMMENT '机房编号' AFTER `create_time`;
+ALTER TABLE `ci_network_device` ADD COLUMN `rack_uuid` varchar(128) DEFAULT NULL COMMENT '机柜编号' AFTER `create_time`;
+ALTER TABLE `ci_network_device` ADD COLUMN `jf_uuid` varchar(128) DEFAULT NULL COMMENT '机房编号' AFTER `create_time`;
+ALTER TABLE `ci_storage` ADD COLUMN `rack_uuid` varchar(128) DEFAULT NULL COMMENT '机柜编号' AFTER `create_time`;
+ALTER TABLE `ci_storage` ADD COLUMN `jf_uuid` varchar(128) DEFAULT NULL COMMENT '机房编号' AFTER `create_time`;
+ALTER TABLE `ci_cluster` DROP COLUMN `ip`;
+ALTER TABLE `ci_logic_server` DROP COLUMN `device_sn`;
+ALTER TABLE `ci_logic_server` DROP COLUMN `storage_sn`;
+ALTER TABLE `ci_logic_server` ADD COLUMN `cluster_uuid` varchar(128) DEFAULT NULL COMMENT '集群编号' AFTER `create_time`;
+ALTER TABLE `ci_logic_server` ADD COLUMN `storage_uuid` varchar(128) DEFAULT NULL COMMENT '存储编号' AFTER `create_time`;
+ALTER TABLE `ci_logic_server` ADD COLUMN `physical_server_uuid` varchar(128) DEFAULT NULL COMMENT '物理服务器编号' AFTER `create_time`;
+ALTER TABLE `ci_middleware` DROP COLUMN `hostname`;
+ALTER TABLE `ci_middleware` ADD COLUMN `cluster_uuid` varchar(128) DEFAULT NULL COMMENT '集群编号' AFTER `create_time`;
+ALTER TABLE `ci_middleware` ADD COLUMN `host_uuid` varchar(128) DEFAULT NULL COMMENT '主机编号，逻辑服务器编号' AFTER `create_time`;
+ALTER TABLE `ci_database` DROP COLUMN `hostname`;
+ALTER TABLE `ci_database` ADD COLUMN `cluster_uuid` varchar(128) DEFAULT NULL COMMENT '集群编号' AFTER `create_time`;
+ALTER TABLE `ci_database` ADD COLUMN `host_uuid` varchar(128) DEFAULT NULL COMMENT '主机编号，逻辑服务器编号' AFTER `create_time`;
+----20170214 end----
+吴小铎添加 弹性伸缩增加预分配ip
+----20170214 start----
+ALTER TABLE `ip_pool` 
+ADD COLUMN `pre_allocation_state` int(4) DEFAULT '0' COMMENT '预分配状态' AFTER `state`;
+----20170214 end----
+王建昌新增网络状态
+----20170227 start----
+ALTER TABLE `network`
+MODIFY COLUMN `state`  int(4) NULL DEFAULT NULL COMMENT '0、异常，1、可用，2、操作中，3、已删除' AFTER `dns`;
+----20170227 end----
+孙超storage_instance_relation变为视图
+----20170227 start----
+DROP table storage_instance_relation;
+create or replace view storage_instance_relation as select distinct `instance_volume_info`.`instance_uuid` AS `uuid`,`instance_volume_info`.`instance_uuid` AS `instance_uuid`,`instance_volume_info`.`storage_uuid` AS `storage_uuid` from `instance_volume_info` where (`instance_volume_info`.`storage_uuid` is not null);
+----20170227 end----
+孙超增加是否缓存同步数据的开关
+----20170227 start----
+sync.isAllowSendRepeat=true
+----20170227 end----
+孙超同步数据可以指定首次执行顺序
+----20170227 start----
+sync.interval.template=0 0/7 * * * ?,1
+sync.interval.host=0 1/7 * * * ?,2
+sync.interval.network=0 2/7 * * * ?,3
+sync.interval.dataStorage=0 3/7 * * * ?,4
+sync.interval.vm=0 4/7 * * * ?,5
+----20170227 end----
+王建昌修改vnet表ip字段大小16->128
+----20170309 start----
+ALTER TABLE `vnet`
+MODIFY COLUMN `ip`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'ip' AFTER `interface_index`;
+----20170309 end----
+吴小铎修改host_info表ip字段大小16->64
+----20170315 start----
+ALTER TABLE `host_info`
+MODIFY COLUMN `ip`  varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '管理ip地址';
+----20170315 end----
+王建昌修改application.properties
+----20170316 start----
+jedis.lockTimeOut=60
+----20170316 end----
+王建昌修改vnet
+----20170320 start----
+ALTER TABLE `vnet`
+ADD COLUMN `sync_network_uuid`  varchar(128) NULL AFTER `network_scop_uuid`;
+ALTER TABLE `vnet` ADD CONSTRAINT `fk_reference_22` FOREIGN KEY (`network_uuid`) REFERENCES `network` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+ALTER TABLE `vnet` ADD CONSTRAINT `fk_reference_23` FOREIGN KEY (`network_scop_uuid`) REFERENCES `network_scop` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+ALTER TABLE `vnet` ADD CONSTRAINT `fk_reference_24` FOREIGN KEY (`sync_network_uuid`) REFERENCES `networks` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+----20170320 end----
+夏同乐修改sys_module,添加两条数据
+----20170321 start----
+INSERT INTO `ftcloud`.`sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('85', NULL, '计算机', '99', '/wsusGroup', NULL, 'wsusGroup');
+INSERT INTO `ftcloud`.`sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('86', NULL, '补丁', '99', '/wsusUpdate', NULL, 'wsusUpdate');
+----20170321 end----
+
+吴小铎修改resource_protect_info,添加锁定密码字段
+----20170321 start----
+ALTER TABLE `resource_protect_info` ADD COLUMN `protect_password` varchar(128) DEFAULT NULL COMMENT '锁定密码' AFTER `protect_end_time`;
+----20170321 end----
+王建昌添加系统参数
+-----20170329 start----
+INSERT INTO `sysconfig` (`uuid`, `module_name`, `param_name`, `value`) VALUES ('30', '单台云主机快照数量限制', 'vms_snapshot_count', '5');
+-----20170329 end -----
+吴小铎修改resource_protect_info,添加锁定密码字段
+----20170329 start----
+ALTER TABLE `resource_protect_info` ADD COLUMN `protect_password` varchar(128) DEFAULT NULL COMMENT '锁定密码' AFTER `protect_end_time`;
+----20170329 end----
+王建昌添加file_path
+-----20170329 start----
+ALTER TABLE `instance_volume_info`
+ADD COLUMN `file_path`  varchar(300) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '磁盘存储文件路径' AFTER `provision`;
+-----20170329 end -----
+王建昌添加外键约束
+-----20170330 start-----
+ALTER TABLE `storage` ADD CONSTRAINT `cluster_uuid_fk_1` FOREIGN KEY (`cluster_uuid`) REFERENCES `cluster` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+-----20170330 end------
+王建昌修改network
+----20170331 start----
+ALTER TABLE `network`
+ADD COLUMN `bg_name`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '后台名称' AFTER `uuid`;
+----20170331 end----
+王建昌添加小机lpar功能
+----20170401 start----
+INSERT INTO `ftcloud`.`sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('87', NULL, '小型机', '99', '/miniMachineInfo', NULL, 'miniMachineInfo');
+INSERT INTO `ftcloud`.`sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('88', NULL, 'LPAR', '99', '/lparInfo', NULL, 'lparInfo');
+CREATE TABLE `mini_machine_info` (
+  `uuid` varchar(128) NOT NULL COMMENT '小机唯一标识',
+  `name` varchar(128) DEFAULT NULL COMMENT '小机名称',
+  `ip` varchar(128) DEFAULT NULL COMMENT '小机IP地址',
+  `cpu_total` int(11) DEFAULT NULL COMMENT 'cpu总核数（核）',
+  `mem_total` int(11) DEFAULT NULL COMMENT '内存总大小（MB）',
+  `cpu_avail` int(11) DEFAULT NULL COMMENT '可获得CPU总核数（核）',
+  `mem_avail` int(11) DEFAULT NULL COMMENT '可获得内存总大小（MB）',
+  `state` int(11) DEFAULT NULL COMMENT '0:异常；1：正在初始化；2：运行；3：正在进行断电；4：断电；6：已删除；',
+  `foreign_ref` varchar(128) DEFAULT NULL COMMENT '外键关联到后端系统',
+  `cluster_uuid` varchar(128) DEFAULT NULL COMMENT '所属集群',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`),
+  CONSTRAINT `FK_Reference_5` FOREIGN KEY (`cluster_uuid`) REFERENCES `cluster` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='小机信息表';
+CREATE TABLE `mm_io_resource` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(128) DEFAULT NULL COMMENT 'IO资源名称',
+  `unit_phys_loc` varchar(128) DEFAULT NULL COMMENT '位置码',
+  `bus_id` varchar(128) DEFAULT NULL COMMENT '总线',
+  `remark` varchar(128) DEFAULT NULL COMMENT '备注',
+  `is_required` int(4) DEFAULT NULL COMMENT '是否为必须(0:不必须，1:必须)',
+  `foreign_ref` varchar(128) DEFAULT NULL COMMENT '外键关联到后端系统',
+  `lpar_uuid` varchar(128) DEFAULT NULL COMMENT '关联到lpar',
+  `mm_uuid` varchar(128) DEFAULT NULL COMMENT '关联到小机',
+  `cluster_uuid` varchar(128) DEFAULT NULL COMMENT '关联到集群',
+  PRIMARY KEY (`uuid`),
+  KEY `FK_Reference_3` (`mm_uuid`),
+  CONSTRAINT `FK_Reference_3` FOREIGN KEY (`mm_uuid`) REFERENCES `mini_machine_info` (`uuid`),
+  CONSTRAINT `FK_Reference_6` FOREIGN KEY (`cluster_uuid`) REFERENCES `cluster` (`uuid`),
+  CONSTRAINT `FK_io_lpar_6` FOREIGN KEY (`lpar_uuid`) REFERENCES `lpar_info` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='小机IO资源';
+CREATE TABLE `lpar_info` (
+  `uuid` varchar(128) NOT NULL,
+  `display_name` varchar(128) DEFAULT NULL COMMENT '显示名称',
+  `name` varchar(128) DEFAULT NULL COMMENT '后端名称',
+  `min_mem` int(11) DEFAULT NULL COMMENT '最小内存（MB）',
+  `max_mem` int(11) DEFAULT NULL COMMENT '最大内存（MB）',
+  `desired_mem` int(11) DEFAULT NULL COMMENT '期望内存（MB）',
+  `min_cpu` int(11) DEFAULT NULL COMMENT '最小cpu（核）',
+  `max_cpu` int(11) DEFAULT NULL COMMENT '最大cpu（核）',
+  `desired_cpu` int(11) DEFAULT NULL COMMENT '期望cpu（核）',
+  `state` int(4) DEFAULT NULL COMMENT '0:异常；1：正在创建中；2：运行；3：关机中；4：已关机；5：删除中；6：已删除；7:开机中；9：重启中；11：暂停中；12：已暂停；13：恢复中；14：已恢复；15：接管中;16:迁移中;17:变更中;',
+  `foreign_ref` varchar(128) DEFAULT NULL COMMENT '外键关联到后台系统',
+  `cluster_uuid` varchar(128) DEFAULT NULL COMMENT '关联到集群',
+  `mm_uuid` varchar(128) DEFAULT NULL COMMENT '关联到小机',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `os_name` varchar(128) DEFAULT NULL COMMENT '操作系统名称',
+  `ip` varchar(128) DEFAULT NULL COMMENT 'IP地址',
+  `user_uuid` varchar(128) DEFAULT NULL COMMENT '所属用户',
+  PRIMARY KEY (`uuid`),
+  KEY `FK_Reference_4` (`mm_uuid`),
+  CONSTRAINT `FK_Refer_mm_8` FOREIGN KEY (`mm_uuid`) REFERENCES `mini_machine_info` (`uuid`),
+  CONSTRAINT `FK_Refer_cl_7` FOREIGN KEY (`cluster_uuid`) REFERENCES `cluster` (`uuid`),
+  CONSTRAINT `FK_Refer_user_1` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='lpar';
+----20170401 end----
+盛义东删除配置管理模块
+----20170405 start----
+DROP TABLE IF EXISTS `ci_relation`;
+DROP TABLE IF EXISTS `ci_log`;
+DROP TABLE IF EXISTS `ci_ext_property`;
+DROP TABLE IF EXISTS `ci_database_record`;
+DROP TABLE IF EXISTS `ci_database_ext`;
+DROP TABLE IF EXISTS `ci_database`;
+DROP TABLE IF EXISTS `ci_middleware_record`;
+DROP TABLE IF EXISTS `ci_middleware_ext`;
+DROP TABLE IF EXISTS `ci_middleware`;
+DROP TABLE IF EXISTS `ci_storage_sub_record`;
+DROP TABLE IF EXISTS `ci_storage_sub_ext`;
+DROP TABLE IF EXISTS `ci_storage_sub`;
+DROP TABLE IF EXISTS `ci_vm_record`;
+DROP TABLE IF EXISTS `ci_vm_ext`;
+DROP TABLE IF EXISTS `ci_vm`;
+DROP TABLE IF EXISTS `ci_mini_server_record`;
+DROP TABLE IF EXISTS `ci_mini_server_ext`;
+DROP TABLE IF EXISTS `ci_mini_server`;
+DROP TABLE IF EXISTS `ci_logic_server_record`;
+DROP TABLE IF EXISTS `ci_logic_server_ext`;
+DROP TABLE IF EXISTS `ci_logic_server`;
+DROP TABLE IF EXISTS `ci_application_record`;
+DROP TABLE IF EXISTS `ci_application_ext`;
+DROP TABLE IF EXISTS `ci_application`;
+DROP TABLE IF EXISTS `ci_cluster_record`;
+DROP TABLE IF EXISTS `ci_cluster_ext`;
+DROP TABLE IF EXISTS `ci_cluster`;
+DROP TABLE IF EXISTS `ci_storage_record`;
+DROP TABLE IF EXISTS `ci_storage_ext`;
+DROP TABLE IF EXISTS `ci_storage`;
+DROP TABLE IF EXISTS `ci_network_device_record`;
+DROP TABLE IF EXISTS `ci_network_device_ext`;
+DROP TABLE IF EXISTS `ci_network_device`;
+DROP TABLE IF EXISTS `ci_physical_server_record`;
+DROP TABLE IF EXISTS `ci_physical_server_ext`;
+DROP TABLE IF EXISTS `ci_physical_server`;
+DROP TABLE IF EXISTS `ci_rack_record`;
+DROP TABLE IF EXISTS `ci_rack_ext`;
+DROP TABLE IF EXISTS `ci_rack`;
+DROP TABLE IF EXISTS `ci_gdhk_record`;
+DROP TABLE IF EXISTS `ci_gdhk_ext`;
+DROP TABLE IF EXISTS `ci_gdhk`;
+DROP TABLE IF EXISTS `ci_jf_record`;
+DROP TABLE IF EXISTS `ci_jf_ext`;
+DROP TABLE IF EXISTS `ci_jf`;
+----20170405 end----
+王建昌执行数据bg_name升级数据修改
+----20170406 start----
+update network set bg_name = name where bg_name is null;
+----20170406 end----
+王建昌修改配置文件
+----20170406 start-----
+#hmc
+rabbitmq.queue.315=FT_Adapter_HMC
+#qincloud
+rabbitmq.queue.316=FT_Adapter_QingCloud
+----20170406 end------
+孙超修改配置文件
+----20170411 start-----
+ALTER TABLE `lpar_info`
+ADD COLUMN `cur_mem`  int(11) NULL COMMENT '当前内存' AFTER `desired_mem`,
+ADD COLUMN `cur_cpu`  int(11) NULL COMMENT '当前cpu' AFTER `desired_cpu`,
+ADD COLUMN `os_type`  int(1) NULL COMMENT '操作系统类型：1:aixliunx; 2:vioserver;3:os400' AFTER `os_name`;
+----20170411 end------
+孙超修改配置文件
+----20170413 start-----
+CREATE TABLE `lpar_io_resource` (
+`uuid`  varchar(128) NOT NULL ,
+`lpar_uuid`  varchar(128) NULL ,
+`io_uuid`  varchar(128) NULL ,
+`is_required`  int(1) NULL  COMMENT '是否为必须(0:不必须，1:必须)' ,
+PRIMARY KEY (`uuid`)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE `lpar_io_resource` ADD CONSTRAINT `fk_io_uuid` FOREIGN KEY (`io_uuid`) REFERENCES `mm_io_resource` (`uuid`);
+ALTER TABLE `mm_io_resource`
+DROP COLUMN `is_required`,
+DROP COLUMN `lpar_uuid`;
+----20170413 end------
+夏同乐修改配置文件
+----20170413 start-----
+rabbitmq.queue.317=FT_Adapter_PATCH
+----20170413 end-----
+王建昌修改配置文件
+----20170414 start-----
+ALTER TABLE `template_info`
+ADD COLUMN `has_config_script`  int(4) NULL DEFAULT 0 COMMENT '是否有脚本：0无，1有' AFTER `highly_available`;
+----20170414 end-----
+王建昌添加系统参数
+----20170417 start----
+INSERT INTO `sysconfig` (`uuid`, `module_name`, `param_name`, `value`) VALUES ('31', 'CPU核数枚举', 'cpu_number_enum', '1,2,4,8,16,32,64');
+INSERT INTO `sysconfig` (`uuid`, `module_name`, `param_name`, `value`) VALUES ('32', '内存G枚举', 'mem_size_enum', '1,2,4,8,16,32,64');
+----20170417 end----
+盛义东添加OO软件表
+----20170418 start----
+INSERT INTO `sys_module` VALUES ('89', NULL, '软件', 99, '/software', NULL, 'software');
+INSERT INTO `sys_module` VALUES ('90', NULL, 'OO资源管理器', 99, '/ooResourceManager', NULL, 'ooResourceManager');
+CREATE TABLE `software` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `name` varchar(128) NOT NULL COMMENT '软件名称',
+  `image_file` varchar(256) DEFAULT NULL COMMENT '图片',
+  `version` varchar(128) DEFAULT NULL COMMENT '版本',
+  `description` text COMMENT '描述信息',
+  `state` int(2) NOT NULL COMMENT '状态（0：删除；1：正常）',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `software_flow` (
+  `uuid` varchar(128) CHARACTER SET utf8 NOT NULL DEFAULT '' COMMENT '主键',
+  `software_uuid` varchar(128) CHARACTER SET utf8 NOT NULL COMMENT '软件编号',
+  `id` varchar(256) CHARACTER SET utf8 NOT NULL COMMENT '流编号',
+  `name` varchar(128) CHARACTER SET utf8 DEFAULT NULL COMMENT '名称',
+  `sn` int(11) DEFAULT NULL COMMENT '序号',
+  PRIMARY KEY (`uuid`),
+  KEY `software_uuid` (`software_uuid`),
+  CONSTRAINT `software_flow_ibfk_1` FOREIGN KEY (`software_uuid`) REFERENCES `software` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE `instance_software` MODIFY COLUMN `type` int(2) DEFAULT NULL COMMENT '软件的类型（1：oracle；2：weblogic）';
+ALTER TABLE `instance_software` ADD COLUMN `software_uuid` varchar(128) DEFAULT NULL COMMENT '软件编号' AFTER uuid;
+ALTER TABLE `instance_software` ADD CONSTRAINT `instance_software_ibfk_2` FOREIGN KEY (`software_uuid`) REFERENCES `software` (`uuid`);
+----20170418 end----
+夏同乐修改配置文件
+----20170419 start-----
+rabbitmq.queue.318=FT_Adapter_ComplianceCheck
+----20170419 end-----
+王建昌修改表结构
+----20170419 start ----
+ALTER TABLE `hypervisor_server`
+MODIFY COLUMN `ip`  char(128) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL AFTER `alias`;
+----20170419 end-----
+王建昌修改配置
+----20170420 start ----
+needCovertRequest=31;34;35;37;314;13;316
+----20170420 end ----
+孙超添加上传配置虚机iso路径参数
+----20170421 start----
+adapter.iso.generate.isoDirInDatastore=
+----20170421 end-----
+夏同乐修改sys_module,修改一条数据
+----20170425 start----
+UPDATE sys_module set url="/complianceCheckDevice",sn="complianceCheckDevice" where uuid="52"
+----20170425 end----
+王建昌添加系统参数
+----20170426 start ----
+INSERT INTO `sysconfig` (`uuid`, `module_name`, `param_name`, `value`) VALUES ('33', '监控数据保留天数', 'monitoring_data_retention_days_count', '30');
+----20170426 end ----
+王建昌修改instance_volume_info表
+----20170427 start----
+ALTER TABLE `instance_volume_info`
+ADD COLUMN `cluster_uuid`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '关联到集群和平台' AFTER `storage_uuid`;
+UPDATE instance_volume_info ,instance_info
+SET instance_volume_info.cluster_uuid = instance_info.cluster_uuid
+WHERE
+	instance_volume_info.instance_uuid = instance_info.uuid and instance_volume_info.instance_uuid is not null;
+----20170427 end----
+盛义东添加系统参数
+----20170505 start----
+INSERT INTO `sysconfig` VALUES ('34', '运营皮肤颜色', 'admin_skin_color', 'blue');
+INSERT INTO `sysconfig` VALUES ('35', '自服务皮肤颜色', 'self_skin_color', 'blue');
+INSERT INTO `sys_module` VALUES ('91', NULL, '系统皮肤', 99, '/systemSkin', NULL, 'systemSkin');
+----20170505 end----
+孙超修改lpar的状态
+----20170508 start----
+ALTER TABLE `lpar_info`
+MODIFY COLUMN `state`  int(4) NULL DEFAULT NULL COMMENT '0:异常；1：正在创建中；2：运行；3：关机中；4：已关机；5：删除中；6：已删除；7:开机中；8：开放式固件；9：硬件发现；10：迁移中;' AFTER `cur_cpu`;
+----20170508 end----
+盛义东添加了软件安装记录表
+----20170510 start----
+CREATE TABLE `software_install` (
+  `uuid` varchar(128) NOT NULL,
+  `instance_software_uuid` varchar(128) DEFAULT NULL COMMENT '云主机软件编号',
+  `software_flow_uuid` varchar(128) DEFAULT NULL COMMENT '软件流编号',
+  `software_flow_id` varchar(256) DEFAULT NULL COMMENT '流ID',
+  `software_flow_name` varchar(128) DEFAULT NULL COMMENT '流名称',
+  `flow_execute_id` varchar(128) DEFAULT NULL COMMENT '流执行ID',
+  `state` int(2) DEFAULT NULL COMMENT '状态（0：异常；1：未安装；2：完成；3：安装中）',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `start_time` datetime DEFAULT NULL COMMENT '开始时间',
+  `end_time` datetime DEFAULT NULL COMMENT '完成时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `sys_module` VALUES ('92', NULL, '软件安装记录', 99, '/softwareInstall', NULL, 'softwareInstall');
+----20170510 end----
+盛义东删除了OO资源管理器
+----20170516 start----
+DELETE FROM `sys_module` WHERE uuid = '90' AND sn = 'ooResourceManager';
+----20170516 end----
+王建昌修改cpu内存报表数据库
+----20170517 start----
+ALTER TABLE `report`
+ADD COLUMN `business_uuid`  varchar(128) NULL COMMENT '业务类型UUID' AFTER `host_uuid`,
+ADD COLUMN `business_name`  varchar(128) NULL COMMENT '业务类型名称' AFTER `business_uuid`;
+----20170517 end----
+王建昌修改网络相关表
+----20170517 start----
+CREATE TABLE `ip_range` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `start_ip` varchar(64) DEFAULT NULL COMMENT '起始ip',
+  `end_ip` varchar(64) DEFAULT NULL COMMENT '结束ip',
+  `network_uuid` varchar(128) DEFAULT NULL COMMENT '关联到网络',
+  `hypervisor_server_container_uuid` varchar(128) DEFAULT NULL COMMENT '关联到链接配置',
+  `network_scop_uuid` varchar(128) DEFAULT NULL COMMENT '关联到适配',
+  PRIMARY KEY (`uuid`),
+  KEY `ipr_net_fk_001` (`network_uuid`),
+  KEY `ipr_hc_002` (`hypervisor_server_container_uuid`),
+  CONSTRAINT `ipr_hc_002` FOREIGN KEY (`hypervisor_server_container_uuid`) REFERENCES `hypervisor_server_container` (`uuid`),
+  CONSTRAINT `ipr_net_fk_001` FOREIGN KEY (`network_uuid`) REFERENCES `network` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+CREATE TABLE `ip_range_relation` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `ip_range_uuid` varchar(128) DEFAULT NULL COMMENT 'ip段的唯一标识',
+  `ip_pool_uuid` varchar(128) DEFAULT NULL COMMENT '对应ip池中ip的唯一标识',
+  PRIMARY KEY (`uuid`),
+  KEY `ip_pool_range_fk_001` (`ip_range_uuid`),
+  KEY `ip_range_pool` (`ip_pool_uuid`),
+  CONSTRAINT `ip_pool_range_fk_001` FOREIGN KEY (`ip_range_uuid`) REFERENCES `ip_range` (`uuid`),
+  CONSTRAINT `ip_range_pool` FOREIGN KEY (`ip_pool_uuid`) REFERENCES `ip_pool` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='ip和ip段关联表';
+
+
+ALTER TABLE `network_scop`
+ADD COLUMN `name`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '适配名称对应后端虚拟化网络名称' AFTER `uuid`;
+----20170517 end----=======
+夏同乐修改template_info表,添加两个字段，password,userName
+----20170518 start----
+alter table template_info ADD password VARCHAR(50) COMMENT '密码';
+alter table template_info ADD user_name VARCHAR(50) COMMENT '用户名';
+----20170518 end----
+盛义东添加了负载均衡虚IP字段
+----20170518 start----
+ALTER TABLE `load_balance` ADD COLUMN `vip` varchar(128) DEFAULT NULL COMMENT '虚IP' AFTER `state`;
+----20170518 end----
+
+吴小铎修改viconfig.properties配置文件增加青云恢复云主机默认密码
+----20170518 start----
+#qingcloud restore default password
+qingcloud.restore.instance.pwd=Admin@123
+----20170518 end----
+盛健勃虚拟机表增加高可用
+----20170518 start----
+ALTER TABLE `instance_info`
+ADD COLUMN `highly_available`  int(1) NULL DEFAULT NULL COMMENT '高可用 0：否，1：是' AFTER `charging_rules_uuid`;
+----20170518 end----
+孙超增加vmware网络同步不再指定默认cidr
+----20170522 start----
+update subnets set cidr='' where ptype=3 and htype=1;
+----20170518 end----
+修改计费详情，添加描述字段
+----20170525 start----
+ALTER TABLE `charge_detail`
+ADD COLUMN `instance_description`  varchar(300) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '资源描述信息' AFTER `instance_type`;
+----20170525 end----
+修改物理机表，添加状态注释
+----20170526 start----
+ALTER TABLE `physical_machine`
+MODIFY COLUMN `state`  int(4) NULL DEFAULT NULL COMMENT '状态：0：异常，1：创建中，2：运行，3:  修改中，4：开机中，5：关机中，6：已关机，7：重启中，8：已删除，9部署中, 10同步中' AFTER `ipmi_password`;
+----20170526 end----
+盛义东修改了软件安装记录表
+----20170605 start----
+ALTER TABLE `software_install` ADD CONSTRAINT `software_install_ibfk` FOREIGN KEY (`instance_software_uuid`) REFERENCES `instance_software` (`uuid`);
+----20170605 end----
+王建昌添加系统参数
+----20170608 start----
+INSERT INTO `sysconfig` (`uuid`, `module_name`, `param_name`, `value`) VALUES ('36', 'QingCloud云主机快照数量', 'qing_cloud_vm_snapshot_max_count', '2');
+----20170608 end----
+盛义东增加了物理机软件表
+----20170615 start----
+CREATE TABLE `physical_machine_software` (
+  `uuid` varchar(128) NOT NULL,
+  `software_uuid` varchar(128) DEFAULT NULL COMMENT '软件编号',
+  `physical_machine_uuid` varchar(128) NOT NULL COMMENT '物理机编号',
+  `state` int(2) NOT NULL COMMENT '软件的安装状态（0：异常；1：未安装；2：完成；3：安装中）',
+  PRIMARY KEY (`uuid`),
+  KEY `physical_machine_software_ibfk_1` (`physical_machine_uuid`),
+  KEY `physical_machine_software_ibfk_2` (`software_uuid`),
+  CONSTRAINT `physical_machine_software_ibfk_1` FOREIGN KEY (`physical_machine_uuid`) REFERENCES `physical_machine` (`uuid`),
+  CONSTRAINT `physical_machine_software_ibfk_2` FOREIGN KEY (`software_uuid`) REFERENCES `software` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='物理机软件';
+ALTER TABLE `software_install` ADD COLUMN `physical_machine_software_uuid` varchar(128) DEFAULT NULL COMMENT '物理机软件编号' AFTER `instance_software_uuid`;
+ALTER TABLE `software_install` ADD CONSTRAINT `software_install_ibfk2` FOREIGN KEY (`physical_machine_software_uuid`) REFERENCES `physical_machine_software` (`uuid`);
+----20170615 end----
+盛义东增加了系统参数“自服务名称”
+----20170616 start----
+INSERT INTO `sysconfig` VALUES ('37', '自服务名称', 'self_name', '自服务门户');
+----20170616 end----
+盛义东修改了软件安装模块
+----20170620 start----
+CREATE TABLE `software_relation` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `software_uuid` varchar(128) DEFAULT NULL COMMENT '软件编号',
+  `resource_uuid` varchar(128) DEFAULT NULL COMMENT '资源编号',
+  `resource_name` varchar(128) DEFAULT NULL,
+  `type` int(2) NOT NULL COMMENT '类型（1：云主机，2：物理机）',
+  `state` int(2) NOT NULL COMMENT '软件的安装状态（0：异常；1：未创建未安装；2：完成；3：安装中）',
+  PRIMARY KEY (`uuid`),
+  KEY `software_uuid` (`software_uuid`),
+  CONSTRAINT `software_relation_ibfk_1` FOREIGN KEY (`software_uuid`) REFERENCES `software` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE `software_install` DROP FOREIGN KEY `software_install_ibfk`;
+ALTER TABLE `software_install` DROP FOREIGN KEY `software_install_ibfk2`;
+ALTER TABLE `software_install` DROP COLUMN `instance_software_uuid`;
+ALTER TABLE `software_install` DROP COLUMN `physical_machine_software_uuid`;
+ALTER TABLE `software_install` ADD COLUMN `software_relation_uuid` varchar(128) DEFAULT NULL COMMENT '软件关系编号' AFTER `uuid`;
+ALTER TABLE `software_install` ADD CONSTRAINT `software_install_ibfk` FOREIGN KEY (`software_relation_uuid`) REFERENCES `software_relation` (`uuid`);
+DROP TABLE instance_software;
+DROP TABLE physical_machine_software;
+----20170620 end----
+王建昌增加了系统参数“云主机批量创建最大限制”
+----20170627 start----
+INSERT INTO `sysconfig` (`uuid`, `module_name`, `param_name`, `value`) VALUES ('38', '云主机批量创建最大限制', 'ins_batch_create_max_num', '10');
+----20170627 end----
+盛义东修改了多级目录
+----20170628 start----
+ALTER TABLE `business` ADD COLUMN `parent_uuid` varchar(128) DEFAULT NULL COMMENT '关联编号' AFTER `uuid`;
+ALTER TABLE `business` ADD CONSTRAINT `business_ibfk` FOREIGN KEY (`parent_uuid`) REFERENCES `business` (`uuid`);
+ALTER TABLE `business` ADD COLUMN `state` int(2) DEFAULT NULL COMMENT '状态，1：正常，2：操作中' AFTER `colorpicker`;
+----20170628 end----
+王建昌添加了热插拔和cpu内存限制的字段
+----20170628 start----
+ALTER TABLE `instance_info_detail`
+ADD COLUMN `cpu_hot_plug`  int(4) NULL DEFAULT 0 COMMENT '是否支持热插拔0不支持、1支持' AFTER `gpu_enbl`,
+ADD COLUMN `mem_hot_plug`  int(4) NULL DEFAULT 0 COMMENT '是否支持热插拔0不支持、1支持' AFTER `cpu_hot_plug`,
+ADD COLUMN `cpu_reset_min_limit`  int(11) NULL DEFAULT 1 COMMENT '热插拔时cpu修改大小最小值限制单位核' AFTER `mem_hot_plug`,
+ADD COLUMN `cpu_reset_max_limit`  int(11) NULL DEFAULT 9999 COMMENT '热插拔cpu修改大小最大值限制单位核' AFTER `cpu_reset_min_limit`,
+ADD COLUMN `mem_reset_min_limit`  double(11,2) NULL DEFAULT 1024 COMMENT '热插拔内存最小值限制 默认1024M，单位MB' AFTER `cpu_reset_max_limit`,
+ADD COLUMN `mem_reset_max_limit`  double(11,2) NULL DEFAULT 102400000 COMMENT '热插拔内存最小值限制 默认102400000M，单位MB' AFTER `mem_reset_min_limit`;
+----20170628 end----
+王建昌添加了自动同步标记字段
+----20170629 start----
+ALTER TABLE `cluster`
+ADD COLUMN `auto_sync`  int(4) NULL DEFAULT 1 COMMENT '0:手动，1自动' AFTER `mem_alloc`;
+----20170630 end----
+王建昌增加了工单系统
+----20170630 star----
+INSERT INTO `sys_module` VALUES ('93', NULL, '工单管理', 99, '/workOrder', NULL, 'workOrder');
+CREATE TABLE `work_order` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `description` varchar(1000) NOT NULL COMMENT '描述信息',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `resolve_time` datetime DEFAULT NULL COMMENT '解决时间',
+  `state` int(4) DEFAULT NULL COMMENT '状态，0 未处理， 1处理中，2已处理',
+  `user_uuid` varchar(128) DEFAULT NULL COMMENT '所属用户UUID',
+  `resolve_user_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `fk_user_uuid_ref` (`user_uuid`),
+  KEY `fk_reslove_user_uuid_ref` (`resolve_user_uuid`),
+  CONSTRAINT `fk_reslove_user_uuid_ref` FOREIGN KEY (`resolve_user_uuid`) REFERENCES `sys_user` (`uuid`),
+  CONSTRAINT `fk_user_uuid_ref` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `work_order_answer` (
+  `uuid` varchar(128) NOT NULL COMMENT '唯一标识',
+  `user_uuid` varchar(128) DEFAULT NULL COMMENT '所属用户',
+  `description` varchar(1000) DEFAULT NULL COMMENT '描述信息',
+  `answer_time` datetime DEFAULT NULL COMMENT '回复时间',
+  `work_order_uuid` varchar(128) DEFAULT NULL COMMENT '关联到工单',
+  PRIMARY KEY (`uuid`),
+  KEY `fk_user_uuid_ref001` (`user_uuid`),
+  KEY `fk_work_order_uuid_ref` (`work_order_uuid`),
+  CONSTRAINT `fk_user_uuid_ref001` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`),
+  CONSTRAINT `fk_work_order_uuid_ref` FOREIGN KEY (`work_order_uuid`) REFERENCES `work_order` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170630 end----
+盛义东修改了存储与云主机关联的视图
+----20170719 end----
+DROP VIEW storage_instance_relation;
+CREATE VIEW `storage_instance_relation` AS select distinct uuid() AS `uuid`,`instance_volume_info`.`instance_uuid` AS `instance_uuid`,`instance_volume_info`.`storage_uuid` AS `storage_uuid` from `instance_volume_info` where (`instance_volume_info`.`storage_uuid` is not null);
+----20170719 end----
+王建昌修改存储云主机关联视图
+
+
+
+盛义东添加云主机电源状态属性
+----20170705 start----
+ALTER TABLE `instance_info` ADD COLUMN `power_state` int(2) unsigned DEFAULT NULL COMMENT '电源状态；1：通电；2：断电' AFTER `state`;
+UPDATE instance_info SET power_state = 2;
+INSERT INTO `columns` VALUES ('35', '电源状态', 'powerState', 0, 35, 100);
+----20170705 end----
+盛义东修改单实例模板表添加计费规则属性
+----20170707 start----
+ALTER TABLE `single_instance_template` ADD COLUMN `software_uuid` varchar(128) DEFAULT NULL COMMENT '软件编号' AFTER `charging_rules_uuid`;
+ALTER TABLE `single_instance_template` ADD CONSTRAINT `single_instance_template_software_ibfk` FOREIGN KEY (`software_uuid`) REFERENCES `software` (`uuid`);
+----20170707 end----
+
+
+吴小铎增加邮件开关
+----20170707 start----
+INSERT INTO `sysconfig` VALUES ('39', '邮件发送开关', 'mail_on_off', '0');
+----20170707 end----
+
+王建昌修改数据盘表结构，添加服务类型表
+----20170707 start----
+ALTER TABLE `disk_snapshot` DROP FOREIGN KEY `fkey_snap_disk01`;
+ALTER TABLE `instance_volume_info`
+ADD COLUMN `disk_type_uuid`  varchar(128) NULL COMMENT 'OpenStack的时候磁盘类型' AFTER `type`;
+ALTER TABLE `disk_snapshot`
+CHANGE COLUMN `disk_uuid` `data_disk_uuid`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL AFTER `updated_at`;
+ALTER TABLE `disk_snapshot` ADD CONSTRAINT `fk_data_disk_01` FOREIGN KEY (`data_disk_uuid`) REFERENCES `data_disk` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+ALTER TABLE `instance_volume_info` ADD CONSTRAINT `fk_reference_23_volume_disk_type_key` FOREIGN KEY (`disk_type_uuid`) REFERENCES `disk_types` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+delete from sys_module where uuid = '24';
+UPDATE `sys_module` SET `name`='块存储快照管理' WHERE (`uuid`='25');
+CREATE TABLE `system_service_type` (
+  `uuid` varchar(128) NOT NULL,
+  `service_id` varchar(64) DEFAULT NULL COMMENT '服务标识（talker,ftstack-vmware等)',
+  `service_name` varchar(64) DEFAULT NULL COMMENT '服务名称，例如：ftcloud-adapter-vmware',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('1', 'talker', '应答任务');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('2', 'resource-job', '资源JOB');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('3', '1', 'OpenStack');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('4', '2', 'CloudStack');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('5', '3-1', 'Vmware');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('6', '3-2', 'XENSERVER');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('7', '3-3', 'KVM');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('8', '3-4', 'HyperV');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('9', '3-5', 'FusionCompute');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('10', '3-6', 'H3C');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('11', '3-7', '蓝讯');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('12', '3-8', 'OVIRT');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('13', '3-9', 'HALSIGN');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('14', '3-10', '华为云存储');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('15', '3-11', '物理机');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('16', '3-12', '负载均衡');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('17', '3-13', 'HP-OO');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('18', '3-14', 'POWERVC');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('19', '3-15', 'HMC');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('20', '3-16', '青云');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('21', '3-17', '补丁');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('22', '3-18', '合规检查');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('94', NULL, '系统服务管理', '99', '/systemService', NULL, 'systemService');
+----20170707 end----
+王建昌添加新配置application.properties
+----20170707 start----
+#zookeeper config
+zookeeperHosts=172.16.12.57:2181,172.16.12.59:2181,172.16.12.188:2181
+zookeeperSessionTimeout=50000
+zookeeperNode=/cloud/monitor
+zookeeperCurrentNodeId=tomcat
+----20170707 end----
+
+
+吴小铎弹性伸缩增加云主机弹性伸缩修改
+----20170710 start----
+ALTER TABLE `elastic_scaling` ADD COLUMN `type` int(1) DEFAULT NULL COMMENT '自动伸缩组类型1云主机，2云主机配置' AFTER `step`;
+
+ALTER TABLE `elastic_scaling`
+CHANGE COLUMN `step` `step` varchar(128) DEFAULT NULL COMMENT '步长' AFTER `strategy`;
+----20170710 end----
+
+王建昌修改数据库表
+----20170712 start----
+CREATE TABLE `iso` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(64) DEFAULT NULL COMMENT '名称',
+  `path` varchar(1000) DEFAULT NULL COMMENT 'iso路径',
+  `type` int(4) DEFAULT NULL COMMENT '类型（1系统，2其他）',
+  `size` double(11,0) DEFAULT NULL COMMENT '大小（G）',
+  `last_modify_time` datetime DEFAULT NULL COMMENT '上一次修改时间',
+  `foreign_ref` varchar(128) DEFAULT NULL COMMENT '外键',
+  `storage_foreign_ref` varchar(128) DEFAULT NULL COMMENT '存储外键',
+  `cluster_uuid` varchar(128) DEFAULT NULL COMMENT '关联集群',
+  `hypervisor_server_container_uuid` varchar(128) DEFAULT NULL COMMENT '关联链接配置',
+  PRIMARY KEY (`uuid`),
+  KEY `fk_cluster_0001` (`cluster_uuid`),
+  KEY `fk_hy_c_uuid_0001` (`hypervisor_server_container_uuid`),
+  CONSTRAINT `fk_cluster_0001` FOREIGN KEY (`cluster_uuid`) REFERENCES `cluster` (`uuid`),
+  CONSTRAINT `fk_hy_c_uuid_0001` FOREIGN KEY (`hypervisor_server_container_uuid`) REFERENCES `hypervisor_server_container` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('95', NULL, 'ISO管理', '99', '/iso', NULL, 'iso');
+CREATE TABLE `cd_rom` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(64) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL COMMENT '挂载时间',
+  `state` int(4) DEFAULT NULL COMMENT '状态 ： 0 异常，1挂载中，2已挂载，3解挂中，4 未挂载',
+  `iso_uuid` varchar(128) DEFAULT NULL,
+  `instance_uuid` varchar(128) DEFAULT NULL,
+  `foreign_ref` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `fk_iso_ref_031` (`iso_uuid`),
+  KEY `fk_ins_ref_031` (`instance_uuid`),
+  CONSTRAINT `fk_ins_ref_031` FOREIGN KEY (`instance_uuid`) REFERENCES `instance_info` (`uuid`),
+  CONSTRAINT `fk_iso_ref_031` FOREIGN KEY (`iso_uuid`) REFERENCES `iso` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170712 end----
+
+盛义东增加软件资源模块
+----20170713 start----
+INSERT INTO `sys_module` VALUES ('96', NULL, '软件资源', 99, '/softwareResource', NULL, 'softwareResource');
+CREATE TABLE `software_resource` (
+  `uuid` varchar(128) NOT NULL,
+  `state` int(2) NOT NULL COMMENT '状态：（0异常；1未安装；2已安装；3安装中）',
+  `create_time` datetime NOT NULL COMMENT '创建时间，运营审核通过交付时间',
+  `software_uuid` varchar(128) DEFAULT NULL COMMENT '软件编号',
+  `user_uuid` varchar(128) DEFAULT NULL COMMENT '用户编号',
+  `order_uuid` varchar(128) DEFAULT NULL COMMENT '订单编号',
+  `charging_rules_uuid` varchar(128) DEFAULT NULL COMMENT '计费规则编号',
+  PRIMARY KEY (`uuid`),
+  KEY `software_uuid` (`software_uuid`),
+  KEY `user_uuid` (`user_uuid`),
+  KEY `order_uuid` (`order_uuid`),
+  KEY `charging_rules_uuid` (`charging_rules_uuid`),
+  CONSTRAINT `software_resource_ibfk_1` FOREIGN KEY (`software_uuid`) REFERENCES `software` (`uuid`),
+  CONSTRAINT `software_resource_ibfk_2` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`),
+  CONSTRAINT `software_resource_ibfk_3` FOREIGN KEY (`order_uuid`) REFERENCES `order_info` (`uuid`),
+  CONSTRAINT `software_resource_ibfk_4` FOREIGN KEY (`charging_rules_uuid`) REFERENCES `charging_rules` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170713 end----
+--- 20170714 start 王建昌修改cluster表----
+ALTER TABLE `cluster`
+ADD COLUMN `performance_data_sync`  int(4) NULL COMMENT '性能数据同步' AFTER `auto_sync`;
+--- 20170714 end----
+
+
+吴小铎弹性伸缩增加开关字段
+----20170717 start----
+ALTER TABLE `elastic_scaling` ADD COLUMN `on_off` int(1) DEFAULT 1 COMMENT '自动伸缩组开关 1开启，0关闭' AFTER `vm_max`;
+----20170717 end----
+盛义东物理机添加业务类型字段
+----20170718 start----
+ALTER TABLE `physical_machine` ADD COLUMN `business_uuid` varchar(128) DEFAULT NULL COMMENT '业务' AFTER `delete_time`;
+ALTER TABLE `physical_machine` ADD CONSTRAINT `physical_machine_ibfk_9` FOREIGN KEY (`business_uuid`) REFERENCES `business` (`uuid`);
+----20170718 end----
+王建昌添加任务订单关联表
+----20170718 start----
+CREATE TABLE `task_info_order_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `order_info_uuid` varchar(128) DEFAULT NULL,
+  `task_info_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE `task_msg_info`
+MODIFY COLUMN `operator`  varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '消息发送者：1代表web端，2代表adapter，3talker' AFTER `task_info_uuid`;
+----20170718 end----
+
+王建昌修改viconfig.properties添加配置
+----20170718 start----
+taskinfo.queue.name=queueTest
+----20170718 end----
+
+王建昌修改application.properties添加配置
+----20170718 start----
+#socket message
+socketUrls=http://localhost:8080/ftcloud/message/push,http://localhost:8080/ftcloud-self/message/push
+----20170718 end----
+----20170718 end----
+盛义东脚本表添加
+----20170719 start----
+CREATE TABLE `script` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `name` varchar(128) NOT NULL COMMENT '脚本名称',
+  `script_file` varchar(256) NOT NULL COMMENT '脚本文件',
+  `version` varchar(128) DEFAULT NULL COMMENT '版本',
+  `description` text COMMENT '描述信息',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `sys_module` VALUES ('97', NULL, '脚本', 99, '/script', NULL, 'script');
+INSERT INTO `sysconfig` VALUES ('40', '脚本流ID', 'script_flow_id', 'be5786e7-412e-46e5-87ad-bfc66d4c8872');
+INSERT INTO `sysconfig` VALUES ('41', '脚本流名称', 'script_flow_name', '执行脚本');
+----20170719 end----
+王建昌修改任务名称类型
+----20170720 start----
+ALTER TABLE `task_info`
+MODIFY COLUMN `resource_type`  varchar(128) NULL DEFAULT NULL COMMENT '资源类型名称' AFTER `resource_uuid`;
+ALTER TABLE `task_info`
+ADD COLUMN `user_uuid`  varchar(128) NULL COMMENT '操作人' AFTER `resource_name`;
+ALTER TABLE `task_info` ADD CONSTRAINT `fk_task_user_uuid` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+----20170720 end----
+盛义东消息表添加，脚本执行记录表
+----20170728 start----
+CREATE TABLE `message` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `user_uuid` varchar(128) DEFAULT NULL COMMENT '用户编号',
+  `name` varchar(128) DEFAULT NULL COMMENT '消息名称',
+  `resource_name` varchar(128) DEFAULT NULL COMMENT '资源名称',
+  `error_message` varchar(128) DEFAULT NULL COMMENT '错误消息',
+  `resource_type` varchar(128) DEFAULT NULL COMMENT '资源类型',
+  `state` int(2) DEFAULT NULL COMMENT '状态 0：异常, 1:处理中,2:完成;',
+  `progress` int(4) DEFAULT NULL COMMENT '进程的比例',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`),
+  KEY `user_uuid` (`user_uuid`),
+  CONSTRAINT `message_ibfk_1` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `sys_module` VALUES ('98', NULL, '消息管理', 99, '/message', NULL, 'message');
+CREATE TABLE `script_execute` (
+  `uuid` varchar(128) NOT NULL,
+  `script_uuid` varchar(128) DEFAULT NULL COMMENT '脚本编号',
+  `resource_uuid` varchar(128) DEFAULT NULL COMMENT '资源编号',
+  `resource_name` varchar(128) DEFAULT NULL COMMENT '资源名称',
+  `type` int(2) DEFAULT NULL COMMENT '类型（1：云主机，2：物理机）',
+  `execute_id` varchar(128) DEFAULT NULL COMMENT '流执行ID',
+  `state` int(2) DEFAULT NULL COMMENT '状态（0：异常；1：未执行；2：完成；3：执行中）',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `start_time` datetime DEFAULT NULL COMMENT '开始时间',
+  `end_time` datetime DEFAULT NULL COMMENT '完成时间',
+  PRIMARY KEY (`uuid`),
+  KEY `script_uuid` (`script_uuid`),
+  CONSTRAINT `script_execute_ibfk_1` FOREIGN KEY (`script_uuid`) REFERENCES `script` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `sys_module` VALUES ('99', NULL, '脚本执行记录', 99, '/scriptExecute', NULL, 'scriptExecute');
+----20170728 end----
+王建昌修改存储云主机关联视图
+----20170731 start----
+drop view `storage_instance_relation`;
+CREATE VIEW `storage_instance_relation` AS select distinct uuid() AS `uuid`,`instance_volume_info`.`instance_uuid` AS `instance_uuid`,`instance_volume_info`.`storage_uuid` AS `storage_uuid` from `instance_volume_info` where ((`instance_volume_info`.`storage_uuid` is not null) and (`instance_volume_info`.`state` <> 4));
+----20170731 end----
+盛义东添加安装软件的介质Ip系统参数
+----20170801 start----
+INSERT INTO `sysconfig` VALUES ('42', '安装软件介质IP', 'media_install_ip', '192.168.122.226');
+----20170801 end----
+王建昌修改task_info表字段大小
+----20170802 start----
+INSERT INTO `sysconfig` (`uuid`, `module_name`, `param_name`, `value`) VALUES ('10', '文件上传绝对路径', 'file_upload_absolute_path', '/usr/local/ftcloud/upload/images/');
+ALTER TABLE `task_info`
+MODIFY COLUMN `task_desc`  text CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT 'state为处理中时，存储任务相关数据，json格式' AFTER `htype`;
+----20170802 end----
+盛义东添加执行脚本的介质路径
+----20170801 start----
+ALTER TABLE `script` ADD COLUMN `media_install_path`  varchar(128) NULL COMMENT '介质路径' AFTER `script_file`;
+----20170801 end----
+盛义东添加系统参数与权限表结构
+----20170803 start----
+ALTER TABLE `sysconfig` ADD COLUMN `visible` int(11) DEFAULT '1' COMMENT '是否显示(0:隐藏;1显示)' AFTER uuid;
+ALTER TABLE `sys_module` ADD COLUMN `visible` int(11) DEFAULT '1' COMMENT '是否显示(0:隐藏;1显示)' AFTER uuid;
+INSERT INTO `sysconfig` VALUES ('43', 0, '计费开关', 'charging_switch', '0');
+----20170803 end----
+王建昌修改approve_rule表加主键
+----20170804 start----
+delete from sys_role_permission where permission like '%iso:%' and role_uuid  in ('ff8080815c86f19f015c9a29dd4b0415','ff8080815c86f19f015c9a29dd4b0415');
+delete from sys_module where uuid = '95';
+ALTER TABLE `approve_rule`
+ADD PRIMARY KEY (`uuid`);
+ALTER TABLE `sys_role_permission`
+MODIFY COLUMN `permission`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '角色权限（user:save）' AFTER `role_uuid`,
+ADD PRIMARY KEY (`role_uuid`, `permission`);
+----20170804 end----
+夏同乐新建磁盘快照关联表
+----20170808 start----
+CREATE TABLE `instance_volume_vm_snapshot` (
+  `uuid` varchar(128) NOT NULL,
+  `instance_volume_uuid` varchar(128) DEFAULT NULL,
+  `vm_snapshot_uuid` varchar(128) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `instance_volume_uuid` (`instance_volume_uuid`) USING BTREE,
+  KEY `snapshot_uuid` (`vm_snapshot_uuid`) USING BTREE,
+  CONSTRAINT `instance_volume_vm_snapshot_ibfk_1` FOREIGN KEY (`instance_volume_uuid`) REFERENCES `instance_volume_info` (`uuid`),
+  CONSTRAINT `instance_volume_vm_snapshot_ibfk_2` FOREIGN KEY (`vm_snapshot_uuid`) REFERENCES `vm_snapshot` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170808 end----
+盛义东添加VDC
+----20170808 start----
+INSERT INTO `sys_module` VALUES ('101', 1, NULL, 'VDC', 99, '/vdc', NULL, 'vdc');
+CREATE TABLE `vdc` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(128) DEFAULT NULL,
+  `isolation_mode` int(2) DEFAULT NULL COMMENT '隔离状态（0：专享；1：共享）',
+  `description` varchar(256) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `user_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `user_uuid` (`user_uuid`),
+  CONSTRAINT `vdc_ibfk_1` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `vdc_resource` (
+  `uuid` varchar(128) NOT NULL,
+  `isolation_mode` int(2) DEFAULT NULL COMMENT '隔离状态（0：专享；1：共享）',
+  `resource_type` int(2) DEFAULT NULL,
+  `resource_uuid` varchar(128) DEFAULT NULL,
+  `vdc_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `vdc_uuid` (`vdc_uuid`),
+  CONSTRAINT `vdc_resource_ibfk_1` FOREIGN KEY (`vdc_uuid`) REFERENCES `vdc` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `vdc_quota` (
+  `uuid` varchar(128) NOT NULL,
+  `quota_type` int(2) DEFAULT NULL,
+  `quota_num` bigint(20) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `vdc_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `vdc_uuid` (`vdc_uuid`),
+  CONSTRAINT `vdc_quota_ibfk_1` FOREIGN KEY (`vdc_uuid`) REFERENCES `vdc` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170808 end----
+盛义东添加VDC状态列，添加组织结构表
+----20170810 start----
+ALTER TABLE `vdc` ADD COLUMN `state` int(2) NULL COMMENT '状态（0：删除；1：正常）' AFTER `isolation_mode`;
+CREATE TABLE `organization` (
+  `uuid` varchar(128) NOT NULL,
+  `parent_uuid` varchar(128) DEFAULT NULL COMMENT '父节点',
+  `name` varchar(64) DEFAULT NULL COMMENT '组织机构名称',
+  `description` varchar(300) DEFAULT NULL COMMENT '描述',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `organization_user_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `organization_uuid` varchar(128) DEFAULT NULL,
+  `user_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `fk_user_uuid_112` (`user_uuid`),
+  KEY `fk_org_uuid_133` (`organization_uuid`),
+  CONSTRAINT `fk_org_uuid_133` FOREIGN KEY (`organization_uuid`) REFERENCES `organization` (`uuid`),
+  CONSTRAINT `fk_user_uuid_112` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20170810 end----
+王建昌修改数据库
+--20170811 start--
+INSERT INTO `sys_module` (`uuid`, `visible`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('95', '1', NULL, '系统工具', '99', '/util', NULL, 'util');
+delete from `system_service_type`;
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('1', 'talker', 'Talker');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('10', '3-6', 'H3C');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('11', '3-7', 'ChinaCache');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('12', '3-8', 'OVIRT');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('13', '3-9', 'HALSIGN');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('14', '3-10', 'OceanStore');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('15', '3-11', 'IPMI');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('16', '3-12', 'LoadBalance');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('17', '3-13', 'OO');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('18', '3-14', 'PowerVC');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('19', '3-15', 'HMC');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('2', 'resource-job', 'ResourceJob');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('20', '3-16', 'QingCloud');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('21', '3-17', 'PATCH');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('22', '3-18', 'Check');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('3', '1', 'OpenStack');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('4', '2', 'CloudStack');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('5', '3-1', 'VMware');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('6', '3-2', 'XENSERVER');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('7', '3-3', 'KVM');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('8', '3-4', 'Hyper-V');
+INSERT INTO `system_service_type` (`uuid`, `service_id`, `service_name`) VALUES ('9', '3-5', 'FusionCompute');
+
+CREATE TABLE `organization` (
+  `uuid` varchar(128) NOT NULL,
+  `parent_uuid` varchar(128) DEFAULT NULL COMMENT '父节点',
+  `name` varchar(64) DEFAULT NULL COMMENT '组织机构名称',
+  `description` varchar(300) DEFAULT NULL COMMENT '描述',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `organization_user_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `organization_uuid` varchar(128) DEFAULT NULL,
+  `user_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `fk_user_uuid_112` (`user_uuid`),
+  KEY `fk_org_uuid_133` (`organization_uuid`),
+  CONSTRAINT `fk_org_uuid_133` FOREIGN KEY (`organization_uuid`) REFERENCES `organization` (`uuid`),
+  CONSTRAINT `fk_user_uuid_112` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE `vdc`
+ADD COLUMN `order_info_uuid`  varchar(128) NULL COMMENT '关联订单表' AFTER `user_uuid`;
+ALTER TABLE `vdc`
+ADD COLUMN `due_time`  datetime NULL COMMENT '资源到期时间' AFTER `order_info_uuid`;
+ALTER TABLE `vdc`
+ADD COLUMN `charging_rules_uuid`  varchar(128) NULL COMMENT '关联计费' AFTER `due_time`;
+INSERT INTO `charging_rules` (`uuid`, `name`, `state`, `product_type`, `charge_mode`, `price`, `create_time`, `comment`) VALUES ('ff8080815d404a60015d4e3afc330048', 'VDC计费规则关闭', '0', '10', '4', '0.000', '2017-08-10 19:26:08', NULL);
+ALTER TABLE `vdc` ADD CONSTRAINT `vdc_ibfk_order_1` FOREIGN KEY (`order_info_uuid`) REFERENCES `order_info` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+ALTER TABLE `vdc` ADD CONSTRAINT `vdc_ibfk_charging` FOREIGN KEY (`charging_rules_uuid`) REFERENCES `charging_rules` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+--20170811 end--
+盛义东添加VPC表
+--20170814 start--
+INSERT INTO `sys_module` VALUES ('103', 1, NULL, 'VPC', 99, '/vpc', NULL, 'vpc');
+CREATE TABLE `vpc` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `name` varchar(128) DEFAULT NULL,
+  `isolation_mode` int(2) DEFAULT NULL COMMENT '隔离状态（0：专享；1：共享）',
+  `state` int(2) DEFAULT NULL COMMENT '状态（0：删除；1：正常）',
+  `description` varchar(256) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `vdc_uuid` varchar(128) DEFAULT NULL,
+  `user_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `vdc_uuid` (`vdc_uuid`),
+  KEY `user_uuid` (`user_uuid`),
+  CONSTRAINT `vpc_ibfk_1` FOREIGN KEY (`vdc_uuid`) REFERENCES `vdc` (`uuid`),
+  CONSTRAINT `vpc_ibfk_2` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `vpc_resource` (
+  `uuid` varchar(128) NOT NULL,
+  `isolation_mode` int(2) DEFAULT NULL COMMENT '隔离状态（0：专享；1：共享）',
+  `resource_type` int(2) DEFAULT NULL,
+  `resource_uuid` varchar(128) DEFAULT NULL,
+  `vpc_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `vpc_uuid` (`vpc_uuid`),
+  CONSTRAINT `vpc_resource_ibfk_1` FOREIGN KEY (`vpc_uuid`) REFERENCES `vpc` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `vpc_quota` (
+  `uuid` varchar(128) NOT NULL,
+  `quota_type` int(2) DEFAULT NULL,
+  `quota_num` bigint(20) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `vpc_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `vpc_uuid` (`vpc_uuid`),
+  CONSTRAINT `vpc_quota_ibfk_1` FOREIGN KEY (`vpc_uuid`) REFERENCES `vpc` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+--20170814 end--
+王建昌修改数据库，添加表
+--20170815 start--
+CREATE TABLE `router_info` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `name` varchar(128) DEFAULT NULL COMMENT '名称',
+  `state` int(4) DEFAULT NULL COMMENT '状态：0异常、1创建中、2正常、3删除中、4已删除、5关联网络中、6移除网络中',
+  `description` varchar(128) DEFAULT NULL COMMENT '描述',
+  `external_network_uuid` varchar(128) DEFAULT NULL COMMENT '外部网络UUID',
+  `external_network_scop_uuid` varchar(128) DEFAULT NULL COMMENT '外部网络适配Uuid',
+  `foreign_ref` varchar(128) DEFAULT NULL,
+  `create_time` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `fk_network_router_1` (`external_network_uuid`),
+  KEY `fk_network_scop_router_1` (`external_network_scop_uuid`),
+  CONSTRAINT `fk_network_router_1` FOREIGN KEY (`external_network_uuid`) REFERENCES `network` (`uuid`),
+  CONSTRAINT `fk_network_scop_router_1` FOREIGN KEY (`external_network_scop_uuid`) REFERENCES `network_scop` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `router_network_scop_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `router_info_uuid` varchar(128) DEFAULT NULL COMMENT '关联路由',
+  `network_scop_uuid` varchar(128) DEFAULT NULL COMMENT '关联网络适配',
+  PRIMARY KEY (`uuid`),
+  KEY `fk_router_1` (`router_info_uuid`),
+  KEY `fk_network_scop_1` (`network_scop_uuid`),
+  CONSTRAINT `fk_network_scop_1` FOREIGN KEY (`network_scop_uuid`) REFERENCES `network_scop` (`uuid`),
+  CONSTRAINT `fk_router_1` FOREIGN KEY (`router_info_uuid`) REFERENCES `router_info` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `network_scop`
+ADD COLUMN `type`  int(4) NULL COMMENT '网络类型：1内部，2外部' AFTER `vlanid`;
+
+ALTER TABLE `vpc_resource`
+MODIFY COLUMN `resource_type`  int(2) NULL DEFAULT NULL COMMENT '1主机，2物理机，3小机，4路由器，5外部网络，6私有网络, 7云主机，8块存储' AFTER `isolation_mode`;
+--20170815 end--
+----20170821 start----
+drop view `storage_instance_relation`;
+CREATE VIEW `storage_instance_relation` AS select distinct uuid() AS `uuid`,`instance_volume_info`.`instance_uuid` AS `instance_uuid`,`instance_volume_info`.`storage_uuid` AS `storage_uuid` from `instance_volume_info` where ((`instance_volume_info`.`storage_uuid` is not null) and (`instance_volume_info`.`state` <> 4));
+----20170821 end----
+孙超修改数据库，添加表
+--20170822 start--
+CREATE TABLE `lpar_virtual_io` (
+  `uuid` varchar(128) NOT NULL,
+  `lpar_uuid` varchar(128) NOT NULL,
+  `type` int(1) NOT NULL COMMENT '设备类型：1-serial(服务器串行); 2-scsi(服务器SCSI); 3-eth(网卡); 4:fc(光纤通道)',
+  `belong_to` int(1) DEFAULT NULL COMMENT 'vio属于谁：1-vios；2-client',
+  `slot_number` int(11) NOT NULL COMMENT '适配器标识',
+  `remote_lpar_uuid` varchar(128) DEFAULT NULL COMMENT '对于vios该值为适用lpar的uuid，如果为空则适用任意lpar；对于lpar来说是vios的uuid',
+  `remote_slot_number` int(5) DEFAULT NULL COMMENT '对于vios该值为适用lpar的slot_number,如果为0，则适用lpar的任意slot; 对于lpar来说是vios的slot_number',
+  `is_required` int(1) NOT NULL COMMENT '必需: 0 - no  1 - yes',
+  `foreign_ref` varchar(50) DEFAULT NULL COMMENT 'slot_number@lpar@小机',
+  `vlan_id` int(5) DEFAULT NULL COMMENT '网卡信息type为eth时不能为空',
+  `trunk_priority` int(2) DEFAULT NULL COMMENT '网卡信息 优先级:值为1-15的数字',
+  `is_ieee` int(1) DEFAULT NULL COMMENT '是否是IEEE 802.1q 兼容适配器0 - no  1 - yes',
+  `additional_vlan_ids` varchar(255) DEFAULT NULL COMMENT '网卡信息 is_ieee为1时，可选的vlanids，多个用逗号分隔',
+  `wwpns` varchar(255) DEFAULT NULL COMMENT '光纤通道信息，多个用逗号分隔',
+  PRIMARY KEY (`uuid`),
+  KEY `fk_lpar_info` (`lpar_uuid`),
+  CONSTRAINT `fk_lpar_info` FOREIGN KEY (`lpar_uuid`) REFERENCES `lpar_info` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `lpar_info`
+ADD COLUMN `is_powervm`  int(1) NULL COMMENT '是否是powervm' AFTER `user_uuid`;
+--20170822 end--
+王建昌改数据库，定义配额类型
+--20170822 start--
+ALTER TABLE `vpc_quota`
+MODIFY COLUMN `quota_type`  int(2) NULL DEFAULT NULL COMMENT '1 云主机，2 CPU核数，3 内存GB，4 硬盘（GB），5公网IP（个），6快照（个），7网络（个），8安全组，9负载均衡，10物理机，11小型机，12路由器' AFTER `uuid`;
+ALTER TABLE `vdc_quota`
+MODIFY COLUMN `quota_type`  int(2) NULL DEFAULT NULL COMMENT '1 云主机，2 CPU核数，3 内存GB，4 硬盘（GB），5公网IP（个），6快照（个），7网络（个），8安全组，9负载均衡，10物理机，11小型机，12路由器' AFTER `uuid`;
+
+CREATE TABLE `vdc_user_pwd` (
+  `uuid` varchar(128) NOT NULL,
+  `password` varchar(128) DEFAULT NULL COMMENT '密码，可解密',
+  `user_uuid` varchar(128) DEFAULT NULL COMMENT '关联用户的UUID',
+  PRIMARY KEY (`uuid`),
+  KEY `vdc_user_pass_fk_001` (`user_uuid`),
+  CONSTRAINT `vdc_user_pass_fk_001` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `router_info`
+ADD COLUMN `gateway`  varchar(128) NULL COMMENT '路由网关' AFTER `foreign_ref`;
+
+
+--20170822 end--
+夏同乐修改数据库sysconfig，添加合规检查开关系统参数
+--20170823 start--
+INSERT INTO `sysconfig` VALUES ('44', '1', '合规检查开关', 'compliance_switch', '1');
+--20170823 end--
+盛义东修改配额
+--20170823 start--
+ALTER TABLE `vdc_quota`
+ADD COLUMN `quota_usage`  bigint(20) NULL AFTER `quota_num`;
+ALTER TABLE `vpc_quota`
+ADD COLUMN `quota_usage`  bigint(20) NULL AFTER `quota_num`;
+--20170823 end--
+夏同乐添加数据库表
+--20170829 start--
+CREATE TABLE `security_groups` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `name` varchar(128) DEFAULT NULL COMMENT '名称',
+  `description` varchar(128) DEFAULT NULL COMMENT '描述',
+  `vpc_id` varchar(128) DEFAULT NULL COMMENT 'vpc表ID',
+  `foreign_ref` varchar(128) DEFAULT NULL COMMENT 'openstack端ID',
+  `create_time` date DEFAULT NULL,
+  `state` int(8) DEFAULT '1' COMMENT '0:异常 1：操作中 2：正常 3：已删除',
+  PRIMARY KEY (`uuid`),
+  KEY `FK_VDC_1` (`vpc_id`),
+  CONSTRAINT `FK_VDC_1` FOREIGN KEY (`vpc_id`) REFERENCES `vpc` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `security_group_rules` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `direction` varchar(32) DEFAULT NULL COMMENT '方向（入口/出口) Ingress or egress',
+  `protocol` varchar(32) DEFAULT NULL COMMENT '协议（icmp, tcp, udp, or null）',
+  `ethertype` varchar(32) DEFAULT NULL COMMENT '以太网类型（IPV4/IPV6）',
+  `port_range_min` int(8) DEFAULT NULL COMMENT '最小端口',
+  `port_range_max` int(8) DEFAULT NULL COMMENT '最大端口',
+  `description` varchar(128) DEFAULT NULL COMMENT '描述',
+  `foreign_ref` varchar(128) DEFAULT NULL,
+  `security_group_id` varchar(128) DEFAULT NULL COMMENT '安全组ID',
+  `create_time` date DEFAULT NULL,
+  `state` int(8) DEFAULT '1' COMMENT '0:异常 1：操作中 2：正常 3：已删除',
+  `is_default` int(8) DEFAULT '0' COMMENT '是否默认规则  0:否 1：是',
+  PRIMARY KEY (`uuid`),
+  KEY `FK_SECURITY_GROUP_1` (`security_group_id`),
+  CONSTRAINT `FK_SECURITY_GROUP_1` FOREIGN KEY (`security_group_id`) REFERENCES `security_groups` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+--20170829 end--
+盛义东添加云主机与安全组关联表
+--20170829 start--
+CREATE TABLE `instance_security_group` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `instance_uuid` varchar(128) NOT NULL COMMENT '云主机编号',
+  `security_group_uuid` varchar(128) NOT NULL COMMENT '安全组编号',
+  PRIMARY KEY (`uuid`),
+  KEY `instance_uuid` (`instance_uuid`),
+  KEY `security_group_uuid` (`security_group_uuid`),
+  CONSTRAINT `instance_security_group_ibfk_1` FOREIGN KEY (`instance_uuid`) REFERENCES `instance_info` (`uuid`),
+  CONSTRAINT `instance_security_group_ibfk_2` FOREIGN KEY (`security_group_uuid`) REFERENCES `security_groups` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+--20170829 end--
+郑海添加防火墙规则表
+--20170830 start--
+CREATE TABLE `firewall_rules` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `name` varchar(128) DEFAULT NULL COMMENT '名称',
+  `protocol` varchar(32) DEFAULT NULL COMMENT '协议（icmp,tcp,udp,or null）',
+  `action` varchar(32) DEFAULT NULL COMMENT '动作(allow or deny)允许或拒绝  默认deny拒绝 ',
+  `source_port` varchar(10) DEFAULT NULL COMMENT '源端口',
+  `source_ip_address` varchar(128) DEFAULT NULL COMMENT '源IP地址/子网',
+  `destination_port` varchar(10) DEFAULT NULL COMMENT '目的端口(80:90)',
+  `destination_ip_address` varchar(128) DEFAULT NULL COMMENT '目的IP地址/子网',
+  `shared` tinyint(1) DEFAULT NULL COMMENT '是不共享',
+  `description` varchar(128) DEFAULT NULL COMMENT '描述',
+  `foreign_ref` varchar(128) DEFAULT NULL,
+  `vpc_id` varchar(128) DEFAULT NULL,
+  `create_time` date DEFAULT NULL COMMENT '创建时间',
+  `state` int(8) DEFAULT '1' COMMENT '0:异常 1:操作中 2:正常 3:已删除',
+  `ip_version` varchar(8) DEFAULT '4' COMMENT 'ip版本4 或 6',
+  PRIMARY KEY (`uuid`),
+  KEY `FK_VPC_1` (`vpc_id`),
+  CONSTRAINT `FK_VPC_1` FOREIGN KEY (`vpc_id`) REFERENCES `vpc` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+--20170830 end--
+郑海添加防火墙表
+--20170830 start--
+CREATE TABLE `firewalls` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `name` varchar(128) DEFAULT NULL,
+  `description` varchar(128) DEFAULT NULL COMMENT '描述',
+  `foreign_ref` varchar(128) DEFAULT NULL COMMENT '名称',
+  `firewall_policy_id` varchar(128) DEFAULT NULL,
+  `vpc_id` varchar(128) DEFAULT NULL,
+  `create_time` date DEFAULT NULL,
+  `state` int(8) DEFAULT '1' COMMENT '0:异常 1:操作中 2:正常 3:已删除 4:关联路由中 5:移除路由中',
+  PRIMARY KEY (`uuid`),
+  KEY `FK_FIREWALL_POLICIES_1` (`firewall_policy_id`),
+  CONSTRAINT `FK_FIREWALL_POLICIES_1` FOREIGN KEY (`firewall_policy_id`) REFERENCES `firewall_policies` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+--20170830 end--
+郑海添加防火墙路由器关联表
+--20170830 start--
+CREATE TABLE `firewall_router_relation` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `firewall_id` varchar(128) DEFAULT NULL COMMENT '防火墙ID',
+  `router_id` varchar(128) DEFAULT NULL COMMENT '路由器ID',
+  PRIMARY KEY (`uuid`),
+  KEY `firewall_id` (`firewall_id`) USING BTREE,
+  CONSTRAINT `FK_FIREWALL_1` FOREIGN KEY (`firewall_id`) REFERENCES `firewalls` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+--20170830 end--
+张继全添加防火墙策略表
+--20170830 start--
+CREATE TABLE `firewall_policies` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `name` varchar(128) DEFAULT NULL COMMENT '名称',
+  `vpc_id` varchar(128) DEFAULT NULL COMMENT '项目ID',
+  `shared` tinyint(1) DEFAULT NULL COMMENT '是否共享',
+  `audited` tinyint(1) DEFAULT NULL COMMENT '是否审核',
+  `description` varchar(128) DEFAULT NULL COMMENT '描述',
+  `foreign_ref` varchar(128) DEFAULT NULL,
+  `create_time` date DEFAULT NULL,
+  `state` int(8) DEFAULT '1' COMMENT '0:异常 1：操作中 2：正常 3：已删除',
+  PRIMARY KEY (`uuid`),
+  KEY `FK_POLICY_VPC_1` (`vpc_id`),
+  CONSTRAINT `FK_POLICY_VPC_1` FOREIGN KEY (`vpc_id`) REFERENCES `vpc` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+--20170830 end--
+张继全添加防火墙策略和规则关系表
+--20170830 start--
+CREATE TABLE `firewall_policy_rule_relation` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `policy_id` varchar(128) DEFAULT NULL COMMENT '防火墙策略ID',
+  `rule_id` varchar(128) DEFAULT NULL COMMENT '防火墙规则ID',
+  PRIMARY KEY (`uuid`),
+  KEY `policy_id` (`policy_id`) USING BTREE,
+  KEY `rule_id` (`rule_id`) USING BTREE,
+  CONSTRAINT `FK_POLICY_1` FOREIGN KEY (`policy_id`) REFERENCES `firewall_policies` (`uuid`),
+  CONSTRAINT `FK_RULE_1` FOREIGN KEY (`rule_id`) REFERENCES `firewall_rules` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+--20170830 end--
+王建昌修改配额类型
+---20170830 start----
+ALTER TABLE `vdc_quota`
+MODIFY COLUMN `quota_type`  int(2) NULL DEFAULT NULL COMMENT '1 云主机，2 CPU核数，3 内存GB，4 硬盘（GB），5公网IP（个），6快照（个），7网络（个），8安全组，9负载均衡，10物理机，11小型机，12路由器, 13防火墙' AFTER `uuid`;
+ALTER TABLE `vpc_quota`
+MODIFY COLUMN `quota_type`  int(2) NULL DEFAULT NULL COMMENT '1 云主机，2 CPU核数，3 内存GB，4 硬盘（GB），5公网IP（个），6快照（个），7网络（个），8安全组，9负载均衡，10物理机，11小型机，12路由器, 13安全组' AFTER `uuid`;
+---20170830 end----
+王建昌修改磁盘类型表
+---20170831 start----
+ALTER TABLE `disk_types`
+ADD COLUMN `cluster_uuid`  varchar(128) NULL COMMENT '关联集群UUID' AFTER `deleted`;
+ALTER TABLE `vpc_resource`
+MODIFY COLUMN `resource_type`  int(2) NULL DEFAULT NULL COMMENT '1主机，2物理机，3小机，4路由器，5外部网络，6私有网络, 7云主机，8块存储，9安全组，10防火墙，11公网IP, 12云主机快照' AFTER `isolation_mode`;
+---20170831 end----
+盛义东修改VPC表添加别名字段
+---20170904 start----
+ALTER TABLE `vpc`
+ADD COLUMN `alias`  varchar(128) NULL COMMENT '别名' AFTER `uuid`;
+---20170904 end----
+盛义东配置管理SQL导入
+---20170905 start----
+INSERT INTO `sysconfig` VALUES ('81',1 , '机房编码前缀', 'ci_jf_code', 'sy-jf-');
+INSERT INTO `sysconfig` VALUES ('82',1 , '机柜编码前缀', 'ci_rack_code', 'fa-rak-');
+INSERT INTO `sysconfig` VALUES ('83',1 , '供电环控编码前缀', 'ci_gdhk_code', 'sy-gdhl-');
+INSERT INTO `sysconfig` VALUES ('84',1 , '物理服务器编码前缀', 'ci_physical_server_code', 'sy-psr-');
+INSERT INTO `sysconfig` VALUES ('85',1 , '网络设备编码前缀', 'ci_network_device_code', 'ne-pnd-');
+INSERT INTO `sysconfig` VALUES ('86',1 , '存储编码前缀', 'ci_storage_code', 'sy-qdd-');
+INSERT INTO `sysconfig` VALUES ('87',1 , '集群编码前缀', 'ci_cluster_code', 'sy-clu-');
+INSERT INTO `sysconfig` VALUES ('88',1 , '逻辑服务器编码前缀', 'ci_logic_server_code', 'sy-lsr-');
+INSERT INTO `sysconfig` VALUES ('89',1 , '小型机子表编码前缀', 'ci_mini_server_code', 'sy-xj-');
+INSERT INTO `sysconfig` VALUES ('90',1 , '虚拟机子表编码前缀', 'ci_vm_code', 'sys-vm-');
+INSERT INTO `sysconfig` VALUES ('91',1 , '存储子表编码前缀', 'ci_storage_sub_code', 'sy-stor-');
+INSERT INTO `sysconfig` VALUES ('92',1 , '应用系统编码前缀', 'ci_application_code', 'ap-sys-');
+INSERT INTO `sysconfig` VALUES ('93',1 , '中间件编码前缀', 'ci_middleware_code', 'sy-mwa-');
+INSERT INTO `sysconfig` VALUES ('94',1 , '数据库编码前缀', 'ci_database_code', 'sy-db-');
+INSERT INTO `sysconfig` VALUES ('99',1 , '配置项关系编码前缀', 'ci_relation_code', 'cr');
+INSERT INTO `sys_module` VALUES ('201',1 , NULL, '逻辑拓扑', 99, '/ciLogicTopo', NULL, 'ciLogicTopo');
+INSERT INTO `sys_module` VALUES ('202',1 , NULL, '3D机房', 99, '/ciThreeD', NULL, 'ciThreeD');
+INSERT INTO `sys_module` VALUES ('203',1 , NULL, '机房配置项', 99, '/ciJf', NULL, 'ciJf');
+INSERT INTO `sys_module` VALUES ('204',1 , NULL, '机柜', 99, '/ciRack', NULL, 'ciRack');
+INSERT INTO `sys_module` VALUES ('205',1 , NULL, '供电环控配置项', 99, '/ciGdhk', NULL, 'ciGdhk');
+INSERT INTO `sys_module` VALUES ('206',1 , NULL, '物理服务器配置项', 99, '/ciPhysicalServer', NULL, 'ciPhysicalServer');
+INSERT INTO `sys_module` VALUES ('207',1 , NULL, '网络设备配置项', 99, '/ciNetworkDevice', NULL, 'ciNetworkDevice');
+INSERT INTO `sys_module` VALUES ('208',1 , NULL, '存储配置项', 99, '/ciStorage', NULL, 'ciStorage');
+INSERT INTO `sys_module` VALUES ('209',1 , NULL, '集群配置项', 99, '/ciCluster', NULL, 'ciCluster');
+INSERT INTO `sys_module` VALUES ('210',1 , NULL, '逻辑服务器配置项', 99, '/ciLogicServer', NULL, 'ciLogicServer');
+INSERT INTO `sys_module` VALUES ('211',1 , NULL, '小机配置项', 99, '/ciMiniServer', NULL, 'ciMiniServer');
+INSERT INTO `sys_module` VALUES ('212',1 , NULL, '虚拟机机配置项', 99, '/ciVm', NULL, 'ciVm');
+INSERT INTO `sys_module` VALUES ('213',1 , NULL, '存储子表', 99, '/ciStorageSub', NULL, 'ciStorageSub');
+INSERT INTO `sys_module` VALUES ('214',1 , NULL, '应用系统配置项', 99, '/ciApplication', NULL, 'ciApplication');
+INSERT INTO `sys_module` VALUES ('215',1 , NULL, '中间件配置置项', 99, '/ciMiddleware', NULL, 'ciMiddleware');
+INSERT INTO `sys_module` VALUES ('216',1 , NULL, '数据库配置项', 99, '/ciDataBase', NULL, 'ciDataBase');
+INSERT INTO `sys_module` VALUES ('217',1 , NULL, '配置项关系', 99, '/ciRelation', NULL, 'ciRelation');
+INSERT INTO `sys_module` VALUES ('218',1 , NULL, '变更记录', 99, '/ciLog', NULL, 'ciLog');
+INSERT INTO `sys_module` VALUES ('219',1 , NULL, '扩展属性', 99, '/ciExtProperty', NULL, 'ciExtProperty');
+CREATE TABLE `ci_jf` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `city` varchar(20) NOT NULL COMMENT '城市',
+  `location` varchar(80) NOT NULL COMMENT '地点',
+  `floor` int(2) NOT NULL COMMENT '楼层',
+  `area` double(11,2) DEFAULT NULL COMMENT '面积',
+  `description` varchar(80) DEFAULT NULL COMMENT '主要用途',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_jf_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `jf_uuid` varchar(128) NOT NULL COMMENT '机房编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `jf_uuid` (`jf_uuid`) USING BTREE,
+  CONSTRAINT `ci_jf_ext_ibfk_1` FOREIGN KEY (`jf_uuid`) REFERENCES `ci_jf` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_jf_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `city` varchar(20) NOT NULL COMMENT '城市',
+  `location` varchar(80) NOT NULL COMMENT '地点',
+  `floor` int(2) NOT NULL COMMENT '楼层',
+  `area` double(11,2) DEFAULT NULL COMMENT '面积',
+  `description` varchar(80) DEFAULT NULL COMMENT '主要用途',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_rack` (
+  `uuid` varchar(128) NOT NULL,
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL,
+  `position` varchar(20) NOT NULL,
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `model` varchar(64) DEFAULT NULL COMMENT '设备型号',
+  `power1` varchar(64) DEFAULT NULL COMMENT '第一路电源',
+  `power2` varchar(64) DEFAULT NULL COMMENT '第二路电源',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) DEFAULT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL,
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `jf_uuid` varchar(128) DEFAULT NULL COMMENT '机房编号',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_rack_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `rack_uuid` varchar(128) NOT NULL COMMENT '机柜编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `rack_uuid` (`rack_uuid`) USING BTREE,
+  CONSTRAINT `ci_rack_ext_ibfk_1` FOREIGN KEY (`rack_uuid`) REFERENCES `ci_rack` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_rack_record` (
+  `uuid` varchar(128) NOT NULL,
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL,
+  `position` varchar(20) NOT NULL,
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `model` varchar(64) DEFAULT NULL COMMENT '设备型号',
+  `power1` varchar(64) DEFAULT NULL COMMENT '第一路电源',
+  `power2` varchar(64) DEFAULT NULL COMMENT '第二路电源',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) DEFAULT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL,
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  `jf_name` varchar(64) DEFAULT NULL COMMENT '机房名称',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_gdhk` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `product_no` varchar(16) DEFAULT NULL COMMENT '产品编号',
+  `fms` varchar(512) DEFAULT NULL COMMENT 'FMS编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `sn` varchar(64) DEFAULT NULL COMMENT '序列号',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `jf_uuid` varchar(128) DEFAULT NULL COMMENT '机房编号',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_gdhk_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `gdhk_uuid` varchar(128) NOT NULL COMMENT '供电环控编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `gdhk_uuid` (`gdhk_uuid`) USING BTREE,
+  CONSTRAINT `ci_gdhk_ext_ibfk_1` FOREIGN KEY (`gdhk_uuid`) REFERENCES `ci_gdhk` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_gdhk_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `product_no` varchar(16) DEFAULT NULL COMMENT '产品编号',
+  `fms` varchar(512) DEFAULT NULL COMMENT 'FMS编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `sn` varchar(64) DEFAULT NULL COMMENT '序列号',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  `jf_name` varchar(64) DEFAULT NULL COMMENT '机房名称',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_physical_server` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) DEFAULT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `fms` varchar(512) DEFAULT NULL COMMENT 'FMS编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `sn` varchar(64) NOT NULL COMMENT '序列号',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `config_detail` varchar(256) DEFAULT NULL COMMENT '配置详情',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) DEFAULT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `jf_uuid` varchar(128) DEFAULT NULL COMMENT '机房编号',
+  `rack_uuid` varchar(128) DEFAULT NULL COMMENT '机柜编号',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_physical_server_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `physical_server_uuid` varchar(128) NOT NULL COMMENT '物理服务器编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `physical_server_uuid` (`physical_server_uuid`) USING BTREE,
+  CONSTRAINT `ci_physical_server_ext_ibfk_1` FOREIGN KEY (`physical_server_uuid`) REFERENCES `ci_physical_server` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_physical_server_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) DEFAULT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `fms` varchar(512) DEFAULT NULL COMMENT 'FMS编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `sn` varchar(64) NOT NULL COMMENT '序列号',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `config_detail` varchar(256) DEFAULT NULL COMMENT '配置详情',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) DEFAULT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  `jf_name` varchar(64) DEFAULT NULL COMMENT '机房名称',
+  `rack_name` varchar(64) DEFAULT NULL COMMENT '机柜名称',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_network_device` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `sn` varchar(64) NOT NULL COMMENT '序列号',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `ios_version` varchar(256) DEFAULT NULL COMMENT 'IOS版本',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `network_type` varchar(64) DEFAULT NULL COMMENT '网络类别',
+  `network_area` varchar(64) DEFAULT NULL COMMENT '网络区域',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `jf_uuid` varchar(128) DEFAULT NULL COMMENT '机房编号',
+  `rack_uuid` varchar(128) DEFAULT NULL COMMENT '机柜编号',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_network_device_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `network_device_uuid` varchar(128) NOT NULL COMMENT '网络设备编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `network_device_uuid` (`network_device_uuid`) USING BTREE,
+  CONSTRAINT `ci_network_device_ext_ibfk_1` FOREIGN KEY (`network_device_uuid`) REFERENCES `ci_network_device` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_network_device_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `sn` varchar(64) NOT NULL COMMENT '序列号',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `ios_version` varchar(256) DEFAULT NULL COMMENT 'IOS版本',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `network_type` varchar(64) DEFAULT NULL COMMENT '网络类别',
+  `network_area` varchar(64) DEFAULT NULL COMMENT '网络区域',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  `jf_name` varchar(64) DEFAULT NULL COMMENT '机房名称',
+  `rack_name` varchar(64) DEFAULT NULL COMMENT '机柜名称',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_storage` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) DEFAULT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `sn` varchar(64) DEFAULT NULL COMMENT '序列号',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `alcapacity` varchar(8) DEFAULT NULL COMMENT '设备容量',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `jf_uuid` varchar(128) DEFAULT NULL COMMENT '机房编号',
+  `rack_uuid` varchar(128) DEFAULT NULL COMMENT '机柜编号',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_storage_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `storage_uuid` varchar(128) NOT NULL COMMENT '存储编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `storage_uuid` (`storage_uuid`) USING BTREE,
+  CONSTRAINT `ci_storage_ext_ibfk_1` FOREIGN KEY (`storage_uuid`) REFERENCES `ci_storage` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_storage_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) DEFAULT NULL COMMENT '名称',
+  `position` varchar(20) NOT NULL COMMENT '位置',
+  `asset_no` varchar(16) DEFAULT NULL COMMENT '资产编号',
+  `maintenance_unit` varchar(64) DEFAULT NULL,
+  `startdate` varchar(16) DEFAULT NULL COMMENT '维保开始时间',
+  `enddate` varchar(16) DEFAULT NULL COMMENT '维保结束时间',
+  `sn` varchar(64) DEFAULT NULL COMMENT '序列号',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `mfrs` varchar(64) DEFAULT NULL COMMENT '制造商',
+  `alcapacity` varchar(8) DEFAULT NULL COMMENT '设备容量',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  `jf_name` varchar(64) DEFAULT NULL COMMENT '机房名称',
+  `rack_name` varchar(64) DEFAULT NULL COMMENT '机柜名称',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_cluster` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `hostnames` varchar(128) DEFAULT NULL COMMENT '所在主机',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_cluster_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `cluster_uuid` varchar(128) NOT NULL COMMENT '集群编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `cluster_uuid` (`cluster_uuid`) USING BTREE,
+  CONSTRAINT `ci_cluster_ext_ibfk_1` FOREIGN KEY (`cluster_uuid`) REFERENCES `ci_cluster` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_cluster_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `hostnames` varchar(128) DEFAULT NULL COMMENT '所在主机',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_logic_server` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `cpu_num` varchar(64) DEFAULT NULL COMMENT 'CPU数量',
+  `memsize` varchar(64) DEFAULT NULL COMMENT '内存大小',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `physical_server_uuid` varchar(128) DEFAULT NULL COMMENT '物理服务器编号',
+  `storage_uuid` varchar(128) DEFAULT NULL COMMENT '存储编号',
+  `physical_server_sn` varchar(64) DEFAULT NULL COMMENT '所属设备序列号',
+  `storage_sn` varchar(64) DEFAULT NULL COMMENT '所属存储序列号',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_logic_server_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `logic_server_uuid` varchar(128) NOT NULL COMMENT '逻辑服务器编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `logic_server_uuid` (`logic_server_uuid`) USING BTREE,
+  CONSTRAINT `ci_logic_server_ext_ibfk_1` FOREIGN KEY (`logic_server_uuid`) REFERENCES `ci_logic_server` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_logic_server_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(14) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `cpu_num` varchar(64) DEFAULT NULL COMMENT 'CPU数量',
+  `memsize` varchar(64) DEFAULT NULL COMMENT '内存大小',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  `physical_server_sn` varchar(64) DEFAULT NULL COMMENT '设备序列号',
+  `storage_sn` varchar(64) DEFAULT NULL COMMENT '存储序列号',
+  `applications` text COMMENT '应用系统',
+  `clusters` text COMMENT '集群',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_mini_server` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `cpu_num` varchar(64) DEFAULT NULL COMMENT 'CPU数量',
+  `memsize` varchar(64) DEFAULT NULL COMMENT '内存大小',
+  `project_chief` varchar(16) DEFAULT NULL COMMENT '项目负责人',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `physical_server_uuid` varchar(128) DEFAULT NULL COMMENT '物理服务器编号',
+  `physical_server_sn` varchar(64) DEFAULT NULL COMMENT '所属设备序列号',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_mini_server_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `mini_server_uuid` varchar(128) NOT NULL COMMENT '小机编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `mini_server_uuid` (`mini_server_uuid`) USING BTREE,
+  CONSTRAINT `ci_mini_server_ext_ibfk_1` FOREIGN KEY (`mini_server_uuid`) REFERENCES `ci_mini_server` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_mini_server_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `model` varchar(64) NOT NULL COMMENT '型号',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `cpu_num` varchar(64) DEFAULT NULL COMMENT 'CPU数量',
+  `memsize` varchar(64) DEFAULT NULL COMMENT '内存大小',
+  `project_chief` varchar(16) DEFAULT NULL COMMENT '项目负责人',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  `physical_server_sn` varchar(64) DEFAULT NULL COMMENT '设备序列号',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_vm` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `cluster_name` varchar(64) DEFAULT NULL COMMENT '集群名称',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `os` varchar(64) DEFAULT NULL COMMENT '操作系统',
+  `cpu_num` varchar(64) DEFAULT NULL COMMENT 'CPU',
+  `memsize` varchar(64) DEFAULT NULL COMMENT 'MEM',
+  `sys_storage` varchar(64) DEFAULT NULL COMMENT '系统存储',
+  `data_storage` varchar(64) DEFAULT NULL COMMENT '数据存储',
+  `application` varchar(64) DEFAULT NULL COMMENT '应用系统',
+  `app_maintainer` varchar(64) DEFAULT NULL COMMENT '应用维护人员',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_vm_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `vm_uuid` varchar(128) NOT NULL COMMENT '虚机编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `vm_uuid` (`vm_uuid`) USING BTREE,
+  CONSTRAINT `ci_vm_ext_ibfk_1` FOREIGN KEY (`vm_uuid`) REFERENCES `ci_vm` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_vm_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `cluster_name` varchar(64) DEFAULT NULL COMMENT '集群名称',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `os` varchar(64) DEFAULT NULL COMMENT '操作系统',
+  `cpu_num` varchar(64) DEFAULT NULL COMMENT 'CPU',
+  `memsize` varchar(64) DEFAULT NULL COMMENT 'MEM',
+  `sys_storage` varchar(64) DEFAULT NULL COMMENT '系统存储',
+  `data_storage` varchar(64) DEFAULT NULL COMMENT '数据存储',
+  `application` varchar(64) DEFAULT NULL COMMENT '应用系统',
+  `app_maintainer` varchar(64) DEFAULT NULL COMMENT '应用维护人员',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_storage_sub` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `capacity` varchar(64) DEFAULT NULL COMMENT '容量',
+  `model` varchar(64) DEFAULT NULL COMMENT '设备型号',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `storage_uuid` varchar(128) DEFAULT NULL COMMENT '存储编号',
+  `storage_sn` varchar(64) DEFAULT NULL COMMENT '所属存储序列号',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_storage_sub_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `storage_sub_uuid` varchar(128) NOT NULL COMMENT '存储字表编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `storage_sub_uuid` (`storage_sub_uuid`) USING BTREE,
+  CONSTRAINT `ci_storage_sub_ext_ibfk_1` FOREIGN KEY (`storage_sub_uuid`) REFERENCES `ci_storage_sub` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_storage_sub_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `capacity` varchar(64) DEFAULT NULL COMMENT '容量',
+  `model` varchar(64) DEFAULT NULL COMMENT '设备型号',
+  `ci_desc` varchar(64) DEFAULT NULL COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  `storage_sn` varchar(128) DEFAULT NULL COMMENT '存储',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_application` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `deployment_type` varchar(16) NOT NULL COMMENT '部署类型',
+  `system_level` varchar(4) NOT NULL COMMENT '系统级别',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_application_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `application_uuid` varchar(128) NOT NULL COMMENT '应用系统编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `application_uuid` (`application_uuid`) USING BTREE,
+  CONSTRAINT `ci_application_ext_ibfk_1` FOREIGN KEY (`application_uuid`) REFERENCES `ci_application` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_application_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `deployment_type` varchar(16) NOT NULL COMMENT '部署类型',
+  `system_level` varchar(4) NOT NULL COMMENT '系统级别',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_middleware` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `version` varchar(20) DEFAULT NULL COMMENT '版本',
+  `middleware_name` varchar(20) NOT NULL COMMENT '中间件名称',
+  `hostnames` varchar(128) DEFAULT NULL COMMENT '所在主机',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_middleware_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `middleware_uuid` varchar(128) NOT NULL COMMENT '中间件编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `middleware_uuid` (`middleware_uuid`) USING BTREE,
+  CONSTRAINT `ci_middleware_ext_ibfk_1` FOREIGN KEY (`middleware_uuid`) REFERENCES `ci_middleware` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_middleware_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `version` varchar(20) DEFAULT NULL COMMENT '版本',
+  `middleware_name` varchar(20) NOT NULL COMMENT '中间件名称',
+  `hostnames` varchar(128) DEFAULT NULL COMMENT '所在主机',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  `applications` text COMMENT '应用系统',
+  `clusters` text COMMENT '集群',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_database` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `version` varchar(20) DEFAULT NULL COMMENT '版本',
+  `sid` varchar(64) NOT NULL COMMENT '实例名称',
+  `hostnames` varchar(128) DEFAULT NULL COMMENT '所在主机',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_database_ext` (
+  `uuid` varchar(128) NOT NULL,
+  `database_uuid` varchar(128) NOT NULL COMMENT '数据库编号',
+  `property` varchar(32) NOT NULL COMMENT '扩展属性',
+  `value` varchar(512) DEFAULT NULL COMMENT '扩展属性值',
+  PRIMARY KEY (`uuid`),
+  KEY `database_uuid` (`database_uuid`) USING BTREE,
+  CONSTRAINT `ci_database_ext_ibfk_1` FOREIGN KEY (`database_uuid`) REFERENCES `ci_database` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_database_record` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `ci_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `ci_name` varchar(64) NOT NULL COMMENT '名称',
+  `version` varchar(20) DEFAULT NULL COMMENT '版本',
+  `sid` varchar(64) NOT NULL COMMENT '实例名称',
+  `hostnames` varchar(128) DEFAULT NULL COMMENT '所在主机',
+  `ip` varchar(64) DEFAULT NULL COMMENT 'IP地址',
+  `ci_desc` text COMMENT '配置项描述',
+  `team` varchar(16) NOT NULL COMMENT '所属团队',
+  `subclass` varchar(16) NOT NULL COMMENT '配置项子类',
+  `status` varchar(8) NOT NULL COMMENT '状态',
+  `create_time` datetime NOT NULL COMMENT '创建时间',
+  `state` varchar(16) DEFAULT NULL COMMENT '操作状态',
+  `remarks` varchar(128) DEFAULT NULL COMMENT '备注信息',
+  `applications` text COMMENT '应用系统',
+  `clusters` text COMMENT '集群',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_relation` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `sn` varchar(64) DEFAULT NULL COMMENT '序号',
+  `ci_a` varchar(64) NOT NULL COMMENT '配置项A',
+  `ci_b` varchar(64) NOT NULL COMMENT '配置项B',
+  `rl_desc` text COMMENT '配置项关系描述',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_ext_property` (
+  `uuid` varchar(128) NOT NULL,
+  `module` varchar(32) NOT NULL COMMENT '扩展表名称',
+  `property` varchar(32) NOT NULL COMMENT '属性名称',
+  `property_title` varchar(32) NOT NULL COMMENT '属性名称（显示名称）',
+  `property_sort` int(11) NOT NULL COMMENT '属性排序',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `ci_log` (
+  `uuid` varchar(128) NOT NULL,
+  `realname` varchar(64) DEFAULT NULL COMMENT '用户姓名',
+  `operation_uuid` varchar(128) DEFAULT NULL COMMENT '操作的编号，只有删除时记录',
+  `name` varchar(128) DEFAULT NULL COMMENT '配置项名称',
+  `type` int(2) NOT NULL COMMENT '类型，1：机房；2：机柜；3：供电环控；4：物理服务器；5：网络设备；6：存储；7：集群；8：逻辑服务器；9：应用系统；10：中间件；11：数据库；12：关系',
+  `operation` int(2) NOT NULL COMMENT '操作，1：添加；2：修改，3：删除，4：导入',
+  `result` int(2) DEFAULT NULL COMMENT '操作结果，1：成功；0：失败',
+  `create_time` datetime NOT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+---20170905 end----
+
+---20170906 start---
+郑海给firewall_router_relation表加路由器索引
+ALTER TABLE `firewall_router_relation`
+ADD INDEX `router_id` (`router_id`) USING BTREE ;
+
+郑海给firewall_router_relation表加路由器外键
+ALTER TABLE `firewall_router_relation` ADD CONSTRAINT `FK_ROUTER_INFO_1` FOREIGN KEY (`router_id`) REFERENCES `router_info` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+郑海修改firewalls表日期格式改为datetime
+ALTER TABLE `firewalls`
+MODIFY COLUMN `create_time`  datetime NULL DEFAULT NULL AFTER `vpc_id`;
+
+郑海修改firewall_rules表日期格式改为datetime
+ALTER TABLE `firewall_rules`
+MODIFY COLUMN `create_time`  datetime NULL DEFAULT NULL COMMENT '创建时间' AFTER `vpc_id`;
+---20170906 end---
+夏同乐修改数据库
+----20170906 start----
+ALTER TABLE `security_groups`
+MODIFY COLUMN `create_time`  datetime NULL DEFAULT NULL AFTER `foreign_ref`;
+
+ALTER TABLE `security_group_rules`
+MODIFY COLUMN `create_time`  datetime NULL DEFAULT NULL AFTER `security_group_id`;
+----20170906 end----
+夏同乐修改数据库
+----20170911 start----
+INSERT INTO `compliance_check_classify` VALUES ('iden_auth_linux', '用户验证', 'Linux');
+----20170911 end----
+王建昌修改数据库
+----20170912 start----
+ALTER TABLE `network_device`
+ADD COLUMN `type`  int(4) NULL DEFAULT 0 COMMENT '1内部，2外部' AFTER `maintenance_type`;
+----20170912 end----
+王建昌修改数据库
+----20170914 start----
+ALTER TABLE `hypervisor_server_container`
+ADD COLUMN `state`  int(4) NULL  DEFAULT 1  COMMENT '0已删除，1可用' AFTER `vm_templatefolder`;
+ALTER TABLE `hypervisor_server`
+ADD COLUMN `state`  int(4) NULL  DEFAULT 1  COMMENT '0已删除，1可用' AFTER `token`;
+ALTER TABLE `iso`
+ADD COLUMN `state`  int(4) NULL  DEFAULT 1  COMMENT '0已删除，1可用' AFTER `cluster_uuid`;
+
+update hypervisor_server_container set state = 1;
+update hypervisor_server  set state = 1;
+update iso  set state = 1;
+----20170914 end----
+
+王建昌修改视图
+----20170918 start----
+ALTER 
+VIEW `storage_instance_relation` AS 
+select distinct uuid() AS `uuid`,`instance_volume_info`.`instance_uuid` AS `instance_uuid`,`instance_volume_info`.`storage_uuid` AS `storage_uuid` from `instance_volume_info` where ((`instance_volume_info`.`storage_uuid` is not null and `instance_volume_info`.instance_uuid is not null) and (`instance_volume_info`.`state` <> 4)) ;
+----20170918 end----
+
+王建昌修改表结构
+----20170919 start----
+ALTER TABLE `message`
+MODIFY COLUMN `error_message`  text CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '错误消息' AFTER `resource_name`;
+----20170919 end----
+
+盛义东修改计费规则
+----20170920 start----
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac5771015dac5e1fb20002', '云主机计费规则关闭', 0, 1, 4, 0.000, '2017-8-4 16:30:35', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac5771015dac5ec3a30007', '负载均衡计费规则关闭', 0, 2, 4, 0.000, '2017-8-4 16:31:17', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac5771015dac5f09cf0009', '块存储计费规则关闭', 0, 3, 4, 0.000, '2017-8-4 16:31:35', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac5771015dac5f587b000b', '云存储计费规则关闭', 0, 4, 4, 0.000, '2017-8-4 16:31:56', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac5771015dac5f9b07000d', '物理机计费规则关闭', 0, 5, 4, 0.000, '2017-8-4 16:32:13', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac600c015dac6102c10000', '弹性调度计费规则关闭', 0, 6, 4, 0.000, '2017-8-4 16:33:45', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac600c015dac63373f0002', '带宽计费规则关闭', 0, 7, 4, 0.000, '2017-8-4 16:36:09', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac600c015dac63803a0005', '流量计费规则关闭', 0, 8, 4, 0.000, '2017-8-4 16:36:28', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac600c015dac6415e90008', '软件计费规则关闭', 0, 9, 5, 0.000, '2017-8-4 16:37:06', '');
+----20170920 end----
+王建昌修改表结构
+----20170920 start----
+UPDATE `sys_module` SET `uuid`='95', `visible`='0', `description`=NULL, `name`='系统工具', `priority`='99', `url`='/util', `parent_uuid`=NULL, `sn`='util' WHERE (`uuid`='95');
+----20170920 end----
+王建昌修改表结构
+----20170921 start----
+ALTER TABLE `pxe_server` ADD COLUMN `state`  int NULL DEFAULT 1 COMMENT '状态：0已删除，1正常' AFTER `domain_password`;
+ALTER TABLE `operating_system` ADD COLUMN `state`  int NULL DEFAULT 1 COMMENT '状态:0已删除,1可用' AFTER `answer_file`;
+----20170921 end----
+王建昌修改表结构
+----20170925 start---
+delete from sys_module where uuid in ('21','23');
+----20170925 end----
+盛义东修改表结构
+----20171013 start---
+ALTER TABLE `software_relation` ADD COLUMN `resource_ip`  varchar(128) NULL COMMENT '资源IP地址' AFTER `resource_name`;
+----20171013 end----
+王建昌添加新表
+----20171013 start----
+CREATE TABLE `vlanid_pool` (
+  `uuid` varchar(128) NOT NULL,
+  `description` varchar(300) DEFAULT NULL COMMENT '描述',
+  `network_device_uuid` varchar(128) DEFAULT NULL COMMENT '关联网络设备',
+  `vlanid_range_start` int(11) DEFAULT NULL COMMENT 'vlanid段开始',
+  `vlanid_range_end` int(11) DEFAULT NULL COMMENT 'vlanid段结束',
+  `state` int(4) DEFAULT NULL COMMENT '0已删除，1可用',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`),
+  KEY `fk_device_vlan_id_sdf` (`network_device_uuid`),
+  CONSTRAINT `fk_device_vlan_id_sdf` FOREIGN KEY (`network_device_uuid`) REFERENCES `network_device` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `sys_module` (`uuid`, `visible`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('104', '1', NULL, 'VLANID池', '99', '/vlanidPool', NULL, 'vlanidPool');
+
+----20171013 end-----
+王建昌添加默认计费规则单价数据
+----20171018 start----
+INSERT INTO `unit_price` (`uuid`, `charging_rules_uuid`, `type`, `price`) VALUES 
+(UUID(), '2c908c2b5dac5771015dac5e1fb20002', '1', '0');
+INSERT INTO `unit_price` (`uuid`, `charging_rules_uuid`, `type`, `price`) VALUES
+(UUID(), '2c908c2b5dac5771015dac5e1fb20002', '2', '0');
+INSERT INTO `unit_price` (`uuid`, `charging_rules_uuid`, `type`, `price`) VALUES 
+(UUID(), '2c908c2b5dac5771015dac5e1fb20002', '3', '0');
+INSERT INTO `unit_price` (`uuid`, `charging_rules_uuid`, `type`, `price`) VALUES 
+(UUID(), '2c908c2b5dac5771015dac5ec3a30007', '4', '0');
+INSERT INTO `unit_price` (`uuid`, `charging_rules_uuid`, `type`, `price`) VALUES 
+(UUID(), '2c908c2b5dac5771015dac5f9b07000d', '1', '0');
+INSERT INTO `unit_price` (`uuid`, `charging_rules_uuid`, `type`, `price`) VALUES 
+(UUID(), '2c908c2b5dac5771015dac5f9b07000d', '2', '0');
+INSERT INTO `unit_price` (`uuid`, `charging_rules_uuid`, `type`, `price`) VALUES 
+(UUID(), '2c908c2b5dac5771015dac5f9b07000d', '3', '0');
+----20171018 end----
+夏同乐修改数据库，sys_module填数据，新建软件参数表software_parameter
+----20171020 start----
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('220', NULL, '软件参数', '99', '/softwareParameter', NULL, 'softwareParameter');
+CREATE TABLE `software_parameter` (
+  `uuid` varchar(128) NOT NULL,
+  `software_type` varchar(128) DEFAULT NULL,
+  `label_name` varchar(128) DEFAULT NULL,
+  `parameter_name` varchar(128) DEFAULT NULL,
+  `parameter_type` int(10) DEFAULT NULL COMMENT '0：input 1:checkbox 2:select',
+  `parameter_value` varchar(128) DEFAULT NULL,
+  `parameter_value_range` varchar(128) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `state` int(2) DEFAULT NULL COMMENT '0：不可用 1：可用',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20171020 end----
+
+吴小铎修改elastic_scaling表vm_max 由int改为varchar
+----20171023 start----
+ALTER TABLE `elastic_scaling`
+CHANGE COLUMN `vm_max` `vm_max` varchar(128) DEFAULT NULL COMMENT '最多实例数' AFTER `vm_min`;
+----20171023 end----
+王建昌修改vlanid池表
+----20171023 start----
+ALTER TABLE `vlanid_pool`
+ADD COLUMN `name`  varchar(64) NULL AFTER `uuid`;
+----20171023 end----
+夏同乐添加软件参数中间表 software_parameter_relation
+----20171024 start----
+CREATE TABLE `software_parameter_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `software_uuid` varchar(128) DEFAULT NULL,
+  `software_parameter_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `software_uuid` (`software_uuid`),
+  KEY `software_parameter_uuid` (`software_parameter_uuid`),
+  CONSTRAINT `software_parameter_relation_ibfk_1` FOREIGN KEY (`software_uuid`) REFERENCES `software` (`uuid`),
+  CONSTRAINT `software_parameter_relation_ibfk_2` FOREIGN KEY (`software_parameter_uuid`) REFERENCES `software_parameter` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20171024 end----
+王建昌修改用户表
+----20171027 start----
+ALTER TABLE sys_user DROP INDEX username;
+----20171027 end----
+夏同乐添加软件流参数中间表 software_flow_parameter_relation
+----20171030 start----
+CREATE TABLE `software_flow_parameter_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `software_flow_uuid` varchar(128) DEFAULT NULL,
+  `software_parameter_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `software_flow_uuid` (`software_flow_uuid`),
+  KEY `software_parameter_uuid` (`software_parameter_uuid`),
+  CONSTRAINT `software_flow_parameter_relation_ibfk_1` FOREIGN KEY (`software_flow_uuid`) REFERENCES `software_flow` (`uuid`),
+  CONSTRAINT `software_flow_parameter_relation_ibfk_2` FOREIGN KEY (`software_parameter_uuid`) REFERENCES `software_parameter` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20171030 end----
+盛义东修改虚拟化配置表机构
+----20171105 start----
+ALTER TABLE `hypervisor_server_container`
+ADD COLUMN `domain`  varchar(128) NULL COMMENT '域' AFTER `vm_templatefolder`,
+ADD COLUMN `az`  varchar(128) NULL COMMENT '可用区' AFTER `domain`,
+ADD COLUMN `project`  varchar(128) NULL COMMENT '项目' AFTER `az`,
+ADD COLUMN `project_admin`  varchar(128) NULL COMMENT '项目管理员' AFTER `project`,
+ADD COLUMN `project_password`  varchar(128) NULL COMMENT '项目密码' AFTER `project_admin`;
+----20171105 end----
+王建昌添加vpc用户关联表
+----20171106 start----
+CREATE TABLE `vpc_user_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `vpc_uuid` varchar(128) DEFAULT NULL COMMENT '关联vpc',
+  `user_uuid` varchar(128) DEFAULT NULL COMMENT '关联用户',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE `sys_user`
+MODIFY COLUMN `status`  varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '状态enabled/disabled/lock/modifying/creating/deleting' AFTER `salt`;
+----20171106 end----
+盛义东添加vpc，vpc，集群关联表
+----20171107 start----
+CREATE TABLE `vdc_cluster_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `vdc_uuid` varchar(128) NOT NULL COMMENT 'VDC编号',
+  `cluster_uuid` varchar(128) NOT NULL COMMENT '集群编号',
+  PRIMARY KEY (`uuid`),
+  KEY `vdc_uuid` (`vdc_uuid`),
+  KEY `cluster_uuid` (`cluster_uuid`),
+  CONSTRAINT `vdc_cluster_relation_ibfk_1` FOREIGN KEY (`vdc_uuid`) REFERENCES `vdc` (`uuid`),
+  CONSTRAINT `vdc_cluster_relation_ibfk_2` FOREIGN KEY (`cluster_uuid`) REFERENCES `cluster` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `vpc_cluster_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `vpc_uuid` varchar(128) NOT NULL COMMENT 'VPC编号',
+  `cluster_uuid` varchar(128) NOT NULL COMMENT '集群编号',
+  PRIMARY KEY (`uuid`),
+  KEY `vpc_uuid` (`vpc_uuid`),
+  KEY `cluster_uuid` (`cluster_uuid`),
+  CONSTRAINT `vpc_cluster_relation_ibfk_1` FOREIGN KEY (`vpc_uuid`) REFERENCES `vpc` (`uuid`),
+  CONSTRAINT `vpc_cluster_relation_ibfk_2` FOREIGN KEY (`cluster_uuid`) REFERENCES `cluster` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20171107 end----
+王建昌添加用户集群关联表
+----20171109 start----
+CREATE TABLE `user_cluster_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `user_uuid` varchar(128) DEFAULT NULL,
+  `cluster_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `fk_ucr_user_uuid` (`user_uuid`),
+  KEY `fk_ucr_cluster_uuid` (`cluster_uuid`),
+  CONSTRAINT `fk_ucr_cluster_uuid` FOREIGN KEY (`cluster_uuid`) REFERENCES `cluster` (`uuid`),
+  CONSTRAINT `fk_ucr_user_uuid` FOREIGN KEY (`user_uuid`) REFERENCES `sys_user` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE `sys_user`
+ADD COLUMN `foreign_ref`  varchar(128) NULL AFTER `department_uuid`;
+----20171109 end----
+盛义东增加了系统参数
+----20171114 start----
+INSERT INTO `sysconfig` VALUES ('45', 1, '电话', 'phone', '4008105558');
+INSERT INTO `sysconfig` VALUES ('46', 1, '版权', 'copyright', 'Copyright 2006-2017中国电信集团系统集成有限责任公司 京ICP备11045362号');
+INSERT INTO `sysconfig` VALUES ('47', 1, '版本', 'version', 'V2.3');
+----20171114 end----
+王建昌添虚拟化配置加字段
+----20171120 start----
+ALTER TABLE `hypervisor_server`
+ADD COLUMN `uri`  varchar(128) NULL COMMENT 'uri' AFTER `alias`;
+----20171120 end----
+
+吴小铎修改viconfig.properties配置文件增加openstack的角色信息
+----20171120 start----
+project.admin.role=project_admin
+project.user.role=_member_
+admin.role=admin
+----20171120 end----
+盛义东配置管理增加的表
+----20171122 start----
+CREATE TABLE `cm_type` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(32) NOT NULL,
+  `code` varchar(32) DEFAULT NULL COMMENT '配置项编码前缀',
+  `sort` int(11) NOT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `cm_type_attr` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(32) NOT NULL,
+  `type` int(11) NOT NULL COMMENT '类型：1：文本；2：日期；3：关联',
+  `relation_type_uuid` varchar(128) DEFAULT NULL COMMENT '关联编号',
+  `type_uuid` varchar(128) NOT NULL COMMENT '配置项编号',
+  `sort` int(11) NOT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `type_uuid` (`type_uuid`),
+  KEY `relation_type_uuid` (`relation_type_uuid`),
+  CONSTRAINT `cm_type_attr_ibfk_1` FOREIGN KEY (`type_uuid`) REFERENCES `cm_type` (`uuid`),
+  CONSTRAINT `cm_type_attr_ibfk_2` FOREIGN KEY (`relation_type_uuid`) REFERENCES `cm_type` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `cm_data` (
+  `uuid` varchar(128) NOT NULL DEFAULT '',
+  `cm_code` varchar(32) NOT NULL COMMENT '配置项编码',
+  `cm_name` varchar(64) NOT NULL COMMENT '名称',
+  `cm_desc` text COMMENT '配置项描述',
+  `team` varchar(16) DEFAULT NULL COMMENT '所属团队',
+  `subclass` varchar(16) DEFAULT NULL COMMENT '配置项子类',
+  `status` varchar(8) DEFAULT NULL COMMENT '状态',
+  `create_user` varchar(128) DEFAULT NULL COMMENT '配置项创建用户编号',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `modify_user` varchar(128) DEFAULT NULL COMMENT '配置项修改用户编号',
+  `modify_time` datetime DEFAULT NULL COMMENT '修改时间',
+  `type_uuid` varchar(128) NOT NULL COMMENT '配置项编号',
+  PRIMARY KEY (`uuid`),
+  KEY `type_uuid` (`type_uuid`),
+  CONSTRAINT `cm_data_ibfk_1` FOREIGN KEY (`type_uuid`) REFERENCES `cm_type` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `cm_data_attr` (
+  `uuid` varchar(128) NOT NULL,
+  `data_uuid` varchar(128) NOT NULL COMMENT '主数据编号',
+  `type_attr_uuid` varchar(128) NOT NULL COMMENT '配置项属性编号',
+  `value` varchar(128) DEFAULT NULL COMMENT '属性值',
+  `relation_uuid` varchar(128) DEFAULT NULL COMMENT '关联编号',
+  PRIMARY KEY (`uuid`),
+  KEY `data_uuid` (`data_uuid`),
+  KEY `type_attr_uuid` (`type_attr_uuid`),
+  KEY `relation_uuid` (`relation_uuid`),
+  CONSTRAINT `cm_data_attr_ibfk_1` FOREIGN KEY (`data_uuid`) REFERENCES `cm_data` (`uuid`),
+  CONSTRAINT `cm_data_attr_ibfk_2` FOREIGN KEY (`type_attr_uuid`) REFERENCES `cm_type_attr` (`uuid`),
+  CONSTRAINT `cm_data_attr_ibfk_3` FOREIGN KEY (`relation_uuid`) REFERENCES `cm_data` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `sys_module` VALUES ('231', 0, NULL, '配置项维护', 99, '/cmType', NULL, 'cmType');
+INSERT INTO `sys_module` VALUES ('232', 0, NULL, '配置项属性维护', 99, '/cmTypeAttr', NULL, 'cmTypeAttr');
+INSERT INTO `sys_module` VALUES ('233', 1, NULL, '机房配置项', 99, '/cmJf', NULL, 'cmJf');
+INSERT INTO `sys_module` VALUES ('234', 1, NULL, '供电设备', 99, '/cmGd', NULL, 'cmGd');
+INSERT INTO `sys_module` VALUES ('235', 1, NULL, '环控设备', 99, '/cmHk', NULL, 'cmHk');
+INSERT INTO `sys_module` VALUES ('236', 1, NULL, '物理网络设备', 99, '/cmPhysicalNetwork', NULL, 'cmPhysicalNetwork');
+INSERT INTO `sys_module` VALUES ('237', 1, NULL, '前端设备', 99, '/cmFront', NULL, 'cmFront');
+INSERT INTO `sys_module` VALUES ('238', 1, NULL, '存储类设备', 99, '/cmStorage', NULL, 'cmStorage');
+INSERT INTO `sys_module` VALUES ('239', 1, NULL, '物理服务器', 99, '/cmPhysicalServer', NULL, 'cmPhysicalServer');
+INSERT INTO `sys_module` VALUES ('240', 1, NULL, '宿主机集群', 99, '/cmHostCluster', NULL, 'cmHostCluster');
+INSERT INTO `sys_module` VALUES ('241', 1, NULL, '逻辑服务器', 99, '/cmLogicServer', NULL, 'cmLogicServer');
+INSERT INTO `sys_module` VALUES ('242', 1, NULL, '应用系统', 99, '/cmApplication', NULL, 'cmApplication');
+INSERT INTO `cm_type` VALUES ('APPLICATION', '应用系统', 'ap-sys-', 9);
+INSERT INTO `cm_type` VALUES ('FRONT', '前端设备', 'sy-qdd-', 4);
+INSERT INTO `cm_type` VALUES ('GD', '供电设备', 'fa-esd-', 1);
+INSERT INTO `cm_type` VALUES ('HK', '环控设备', 'fa-emd-', 2);
+INSERT INTO `cm_type` VALUES ('HOST_CLUSTER', '宿主机集群', 'sy-cls-', 7);
+INSERT INTO `cm_type` VALUES ('JF', '机房', 'fa-srm-', 0);
+INSERT INTO `cm_type` VALUES ('LOGIC_SERVER', '逻辑服务器', 'sy-lsr-', 8);
+INSERT INTO `cm_type` VALUES ('PHYSICAL_NETWORK', '物理网络设备', 'ne-pnd-', 3);
+INSERT INTO `cm_type` VALUES ('PHYSICAL_SERVER', '物理服务器', 'sy-psr-', 6);
+INSERT INTO `cm_type` VALUES ('STORAGE', '存储类设备', 'sy-str-', 5);
+----20171122 end----
+盛义东配置管理修改日志表
+----20171130 start----
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1c93fb10000', '地点', 1, NULL, 'JF', 0);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1c959f60001', '面积', 1, NULL, 'JF', 1);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1c97c6b0002', '主要用途', 1, NULL, 'JF', 2);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1caee270003', '资产编号', 1, NULL, 'GD', 0);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1cb0d350004', '维保单位', 1, NULL, 'GD', 1);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1cb38df0005', '保修结束时间', 2, NULL, 'GD', 2);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1cb4ff20006', '序列号', 1, NULL, 'GD', 3);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1cb71570007', '制造商', 1, NULL, 'GD', 4);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1cb8ddf0008', '型号', 1, NULL, 'GD', 5);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1cbb0600009', '额定负荷', 1, NULL, 'GD', 6);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1cbfeb4000a', '所属逻辑组', 1, NULL, 'GD', 7);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1cc423e000b', '机房', 3, 'JF', 'GD', 8);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1d02b3d000c', '资产编号', 1, NULL, 'HK', 0);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1d059c4000d', '维保单位', 1, NULL, 'HK', 1);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1d09942000e', '保修i结束时间', 2, NULL, 'HK', 2);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1d0b193000f', '序列号', 1, NULL, 'HK', 3);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1d0cd910010', '制造商', 1, NULL, 'HK', 4);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1d0eaf90011', '型号', 1, NULL, 'HK', 5);
+INSERT INTO `cm_type_attr` VALUES ('2c908c2b5fe1a368015fe1d10ddc0012', '机房', 3, 'JF', 'HK', 6);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece718ff0000', 'IP地址', 1, NULL, 'PHYSICAL_NETWORK', 0);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece74b7e0001', '网络类别', 1, NULL, 'PHYSICAL_NETWORK', 1);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece77d910002', '资产编号', 1, NULL, 'PHYSICAL_NETWORK', 2);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece7c0aa0003', '维保单位', 1, NULL, 'PHYSICAL_NETWORK', 3);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece88a6b0004', '保修结束时间', 2, NULL, 'PHYSICAL_NETWORK', 4);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece8d10f0005', '序列号', 1, NULL, 'PHYSICAL_NETWORK', 5);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece8f9a70006', '制造商', 1, NULL, 'PHYSICAL_NETWORK', 6);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece9212c0007', '型号', 1, NULL, 'PHYSICAL_NETWORK', 7);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece948d20008', 'IOS版本', 1, NULL, 'PHYSICAL_NETWORK', 8);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece973500009', '机柜编号', 1, NULL, 'PHYSICAL_NETWORK', 9);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece9b157000a', '机柜起始位置', 1, NULL, 'PHYSICAL_NETWORK', 10);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fece9ee58000b', '管理设备序列号', 1, NULL, 'PHYSICAL_NETWORK', 11);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecea2274000c', '机房', 3, 'JF', 'PHYSICAL_NETWORK', 12);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecec3301000d', 'IP地址', 1, NULL, 'FRONT', 0);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecec5b7f000e', '资产编号', 1, NULL, 'FRONT', 1);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecec8ecf000f', '维保单位', 1, NULL, 'FRONT', 2);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fececc2ad0010', '保修结束时间', 1, NULL, 'FRONT', 3);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fececeb4a0011', '序列号', 1, NULL, 'FRONT', 4);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015feced14280012', '制造商', 1, NULL, 'FRONT', 5);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015feced50ec0013', '型号', 1, NULL, 'FRONT', 6);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015feced885a0014', '微码版本', 1, NULL, 'FRONT', 7);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecedb4920015', '机柜编号', 1, NULL, 'FRONT', 8);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015feceded0b0016', '机柜起始位置', 1, NULL, 'FRONT', 9);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecefba910017', '机房', 3, 'JF', 'FRONT', 10);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf022890018', '物理网络设备', 3, 'PHYSICAL_NETWORK', 'FRONT', 11);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf15ed60019', 'IP地址', 1, NULL, 'STORAGE', 0);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf18b3a001a', '资产编号', 1, NULL, 'STORAGE', 1);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf54fc7001b', '序列号', 1, NULL, 'STORAGE', 2);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf57c2c001c', '维保单位', 1, NULL, 'STORAGE', 3);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf5b53d001d', '保修结束时间', 2, NULL, 'STORAGE', 4);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf5e297001e', '制造商', 1, NULL, 'STORAGE', 5);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf6126d001f', '型号', 1, NULL, 'STORAGE', 6);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf64a530020', '微码版本', 1, NULL, 'STORAGE', 7);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf6856d0021', '机柜编号', 1, NULL, 'STORAGE', 8);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf6c39d0022', '机柜起始位置', 1, NULL, 'STORAGE', 9);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf71af30023', '机房', 3, 'JF', 'STORAGE', 10);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf7b83c0024', 'IP地址', 1, NULL, 'PHYSICAL_SERVER', 0);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf7ef5b0025', '资产编号', 1, NULL, 'PHYSICAL_SERVER', 1);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf80fe90026', '维保单位', 1, NULL, 'PHYSICAL_SERVER', 2);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf845200027', '保修结束时间', 2, NULL, 'PHYSICAL_SERVER', 3);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf889cf0028', '制造商', 1, NULL, 'PHYSICAL_SERVER', 4);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf8a7d90029', '型号', 1, NULL, 'PHYSICAL_SERVER', 5);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf95056002a', '微码版本', 1, NULL, 'PHYSICAL_SERVER', 6);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf969fd002b', 'CPU', 1, NULL, 'PHYSICAL_SERVER', 7);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf98abc002c', '内存', 1, NULL, 'PHYSICAL_SERVER', 8);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecf9ae82002d', '机柜编号', 1, NULL, 'PHYSICAL_SERVER', 9);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfa0689002e', '机柜起始位置', 1, NULL, 'PHYSICAL_SERVER', 10);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfa296f002f', '机房', 3, 'JF', 'PHYSICAL_SERVER', 11);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfa5b420030', '物理网络设备', 3, 'PHYSICAL_NETWORK', 'PHYSICAL_SERVER', 12);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfb09050031', 'IP地址', 1, NULL, 'HOST_CLUSTER', 0);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfb30c00032', '分配存储', 1, NULL, 'HOST_CLUSTER', 1);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfb62df0033', '服务网段', 1, NULL, 'HOST_CLUSTER', 2);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfba9990034', '存储类设备', 4, 'STORAGE', 'HOST_CLUSTER', 3);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfbdd8c0035', '物理服务器', 4, 'PHYSICAL_SERVER', 'HOST_CLUSTER', 4);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfc55020036', 'IP地址', 1, NULL, 'LOGIC_SERVER', 0);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfc84500037', '操作系统版本', 1, NULL, 'LOGIC_SERVER', 1);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfceaee0038', '操作系统补丁基线', 1, NULL, 'LOGIC_SERVER', 2);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfd10bc0039', '数据库版本', 1, NULL, 'LOGIC_SERVER', 3);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfd3727003a', '中间件版本', 1, NULL, 'LOGIC_SERVER', 4);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfd6239003b', '分配逻辑CPU', 1, NULL, 'LOGIC_SERVER', 5);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfdd15c003c', '分配内存GB', 1, NULL, 'LOGIC_SERVER', 6);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfe29ba003d', '分配存储GB', 1, NULL, 'LOGIC_SERVER', 7);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecfeb277003e', '分配NAS（GB）', 1, NULL, 'LOGIC_SERVER', 8);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecff06a0003f', '分配SAN（GB）', 1, NULL, 'LOGIC_SERVER', 9);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecffa36f0040', '应用系统', 4, 'APPLICATION', 'LOGIC_SERVER', 10);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fecffdd240041', '存储类设备', 4, 'STORAGE', 'LOGIC_SERVER', 11);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fed0026020042', '前端设备', 4, 'FRONT', 'LOGIC_SERVER', 12);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fece59a015fed0061030043', '物理网络设备', 4, 'PHYSICAL_NETWORK', 'LOGIC_SERVER', 13);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fed2eae015fed30eb9e0000', '系统类型', 1, NULL, 'APPLICATION', 0);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fed2eae015fed3125ed0001', '应用版本', 1, NULL, 'APPLICATION', 1);
+INSERT INTO `cm_type_attr` VALUES ('402899aa5fed2eae015fed317f470002', '逻辑服务器', 4, 'LOGIC_SERVER', 'APPLICATION', 2);
+ALTER TABLE `ci_log`
+ADD COLUMN `cm_type`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '北分配置关联类型' AFTER `create_time`;
+----20171130 end----
+王建昌添加共享存储监控告警功能表
+----20171130 start----
+CREATE TABLE `alert_rules` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(64) CHARACTER SET utf8 DEFAULT NULL COMMENT '名称',
+  `resource_type` varchar(4) DEFAULT NULL COMMENT '1hyperV共享存储',
+  `state` int(4) DEFAULT NULL COMMENT '状态：1正常，2启用，3停用，4已删除',
+  `create_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `alert_resource_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `alert_rules_uuid` varchar(128) DEFAULT NULL,
+  `resource_uuid` varchar(128) DEFAULT NULL,
+  `resource_type` varchar(4) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `alert_rules_item` (
+  `uuid` varchar(128) NOT NULL,
+  `alert_quota_uuid` varchar(128) DEFAULT NULL,
+  `conditions` int(11) DEFAULT NULL COMMENT '条件：1大于等于，2小于等于',
+  `value` double DEFAULT NULL COMMENT '阈值',
+  `alert_rules_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `alert_rules_quota` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(64) DEFAULT NULL,
+  `resource_type` int(4) DEFAULT NULL COMMENT '1hyperV共享存储',
+  `monitor_time_rules` varchar(64) DEFAULT NULL COMMENT '检测时间规则',
+  `rules` varchar(128) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+INSERT INTO `alert_rules_quota` (`uuid`, `name`, `resource_type`, `monitor_time_rules`, `rules`, `create_time`) VALUES ('1', '共享存储余量百分比', '1', '0/10 * * * * ? *', '(diskTotal-diskUsage)/diskTotal', '2017-11-24 11:39:13');
+INSERT INTO `alert_rules_quota` (`uuid`, `name`, `resource_type`, `monitor_time_rules`, `rules`, `create_time`) VALUES ('2', '共享存储使用量百分比', '1', '0/10 * * * * ? *', 'diskUsage/diskTotal', '2017-11-24 11:40:30');
+INSERT INTO `alert_rules_quota` (`uuid`, `name`, `resource_type`, `monitor_time_rules`, `rules`, `create_time`) VALUES ('3', '日增量和剩余量百分比', '1', '0 10 0 ? * *', 'DZ_diskUsage/(diskTotal-diskUsage)', '2017-11-24 13:21:29');
+INSERT INTO `sys_module` (`uuid`, `visible`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('105', '1', NULL, '存储告警规则', '99', '/storageAlertRules', NULL, 'storageAlertRules');
+
+
+INSERT INTO `sysconfig` (`uuid`, `visible`, `module_name`, `param_name`, `value`) VALUES ('48', '1', '告警提示最大次数', 'alert_max_count', '10');
+INSERT INTO `sysconfig` (`uuid`, `visible`, `module_name`, `param_name`, `value`) VALUES ('49', '1', '告警提示时间最小间隔增量(毫秒)', 'alert_time_interval_increment', '120000');
+INSERT INTO `sysconfig` (`uuid`, `visible`, `module_name`, `param_name`, `value`) VALUES ('50', '1', '告警提示任务时间规则', 'alert_prompt_job_time_rules', '0/60 * * * * ? *');
+ALTER TABLE `alert`
+MODIFY COLUMN `rule_uuid`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL AFTER `uuid`;
+----20171130 end----
+盛义东添加重启策略
+----20171206 start----
+CREATE TABLE `reboot_strategy` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(128) NOT NULL,
+  `description` varchar(256) DEFAULT NULL,
+  `execute_type` int(2) DEFAULT NULL COMMENT '执行类型（1：每月；2：每周；3：每天；4：一次）',
+  `execute_date` varchar(128) DEFAULT NULL COMMENT '执行日期',
+  `execute_time` varchar(128) DEFAULT NULL COMMENT '执行时间',
+  `state` int(2) DEFAULT NULL COMMENT '状态(0：删除；1：正常；2：启用)',
+  `create_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+----20171206 end----
+王建昌添加新数据库
+----20171207 start----
+CREATE TABLE `clear_strategy` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(64) CHARACTER SET utf8 DEFAULT NULL COMMENT '名称',
+  `os_type` int(4) DEFAULT NULL COMMENT '操作系统类型',
+  `time_rule` varchar(64) CHARACTER SET utf8 DEFAULT NULL COMMENT '时间规则',
+  `operation_type` int(4) DEFAULT NULL COMMENT '操作类型：1清理，2压缩，3收集',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `description` varchar(300) CHARACTER SET utf8 DEFAULT NULL COMMENT '描述',
+  `state` int(4) DEFAULT NULL COMMENT '状态：1未启用，2已启用，3已删除',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `clear_rule` (
+  `uuid` varchar(128) CHARACTER SET utf8 NOT NULL,
+  `name` varchar(64) CHARACTER SET utf8 DEFAULT NULL COMMENT '规则名称',
+  `clear_strategy_uuid` varchar(128) CHARACTER SET utf8 DEFAULT NULL COMMENT '所属策略',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`uuid`),
+  KEY `clear_r_s_fk_133` (`clear_strategy_uuid`),
+  CONSTRAINT `clear_r_s_fk_133` FOREIGN KEY (`clear_strategy_uuid`) REFERENCES `clear_strategy` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `clear_rule_param` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(64) CHARACTER SET utf8 DEFAULT NULL COMMENT '参数值',
+  `value` varchar(500) CHARACTER SET utf8 DEFAULT NULL COMMENT '参数值',
+  `clear_rule_uuid` varchar(128) CHARACTER SET utf8 DEFAULT NULL COMMENT '关联规则',
+  PRIMARY KEY (`uuid`),
+  KEY `c_r_p_cr_fk_122` (`clear_rule_uuid`),
+  CONSTRAINT `c_r_p_cr_fk_122` FOREIGN KEY (`clear_rule_uuid`) REFERENCES `clear_rule` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `clear_resource_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `resource_uuid` varchar(128) DEFAULT NULL,
+  `resource_type` varchar(64) DEFAULT NULL,
+  `resource_name` varchar(64) DEFAULT NULL,
+  `clear_strategy_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `job_param_info` (
+  `uuid` varchar(128) NOT NULL,
+  `job_type_info_uuid` varchar(128) DEFAULT NULL COMMENT '任务信息UUID',
+  `param_cn_name` varchar(128) DEFAULT NULL COMMENT '参数的中文名字',
+  `param_en_name` varchar(128) DEFAULT NULL COMMENT '参数的英文名字',
+  `type` varchar(64) DEFAULT NULL COMMENT 'string,list,select',
+  `values` varchar(300) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `fk_job_type_info_uuid` (`job_type_info_uuid`),
+  CONSTRAINT `fk_job_type_info_uuid` FOREIGN KEY (`job_type_info_uuid`) REFERENCES `job_type_info` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `job_type_info` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `sys_module` (`uuid`, `visible`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('107', '1', NULL, '清理策略', '99', '/clearStrategy', NULL, 'clearStrategy');
+INSERT INTO `job_type_info` (`uuid`, `name`) VALUES ('1', '清理');
+INSERT INTO `job_type_info` (`uuid`, `name`) VALUES ('2', '压缩');
+INSERT INTO `job_type_info` (`uuid`, `name`) VALUES ('3', '收集');
+
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('1', '3', 'ftp地址', 'ftpurl', 'string', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('10', '2', '文件名列表', 'filenames', 'list', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('11', '2', '最后一次修改时间前', 'lastModifyDate', 'string', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('12', '2', '文件类型', 'fileType', 'list', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('13', '2', '文件所在目录', 'filepath', 'list', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('14', '1', '文件名列表', 'filenames', 'list', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('15', '1', '最后一次修改时间前', 'lastModifyDate', 'string', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('16', '1', '文件类型', 'fileType', 'list', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('17', '1', '文件所在目录', 'filepath', 'list', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('2', '3', 'ftp端口', 'port', 'string', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('3', '3', 'ftp用户名', 'username', 'string', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('4', '3', 'ftp用户密码', 'password', 'string', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('5', '3', 'ftp文件路径', 'ftpfiles', 'list', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('6', '3', '文件名列表', 'filenames', 'list', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('7', '3', '最后一次修改时间前', 'lastModifyDate', 'string', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('8', '3', '文件类型', 'fileType', 'list', NULL);
+INSERT INTO `job_param_info` (`uuid`, `job_type_info_uuid`, `param_cn_name`, `param_en_name`, `type`, `values`) VALUES ('9', '3', '文件所在目录', 'filepath', 'list', NULL);
+
+----20171207 end----
+修改数据库初始化数据
+----20171222 start----
+UPDATE `sysconfig` SET `uuid`='46', `visible`='1', `module_name`='版权', `param_name`='copyright', `value`='Copyright 2006-2017北京XXX科技有限公司 京ICP备88888888号' WHERE (`uuid`='46');
+UPDATE `sysconfig` SET `uuid`='45', `visible`='1', `module_name`='电话', `param_name`='phone', `value`='400-888-8888' WHERE (`uuid`='45');
+----20171222 end----
+王建昌修改数据库初始化数据
+----20171229 start----
+INSERT INTO `sys_module` (`uuid`, `visible`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('108', '1', NULL, '主机性能分布情况', '99', '/hostDistributed', NULL, 'hostDistributed');
+----20171229 end---
+
+
+王建场修改数据库
+----20180129 start----
+CREATE TABLE `specification` (
+  `uuid` varchar(128) NOT NULL,
+  `type` varchar(4) DEFAULT NULL COMMENT '1CPU,2内存，3磁盘 单位都为G',
+  `value` int(11) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `organization_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `service_catalog_specification_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `type` int(4) DEFAULT NULL COMMENT '1CPU ,2 内存，3 磁盘 ，单位都是G',
+  `value` int(11) DEFAULT NULL,
+  `service_catalog_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `service_catalog` (
+  `uuid` varchar(128) NOT NULL,
+  `name` varchar(64) DEFAULT NULL,
+  `img_file` varchar(300) DEFAULT NULL COMMENT '图片路径',
+  `type` int(4) DEFAULT NULL COMMENT '类型：1云主机',
+  `state` int(4) DEFAULT NULL COMMENT '状态 0：删除，1：正常，3：下架，4：发布''',
+  `description` varchar(300) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `organization_uuid` varchar(128) DEFAULT NULL,
+  `approve_levels` int(4) DEFAULT NULL COMMENT '几级审批',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `service_catalog_template_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `template_uuid` varchar(128) DEFAULT NULL,
+  `service_catalog_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `service_catalog_organization_visible_relation` (
+  `uuid` varchar(128) NOT NULL,
+  `service_catalog_uuid` varchar(128) DEFAULT NULL,
+  `organization_uuid` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `sys_role`
+ADD COLUMN `type`  int(4) NULL COMMENT '1管理员，2审批' AFTER `description`,
+ADD COLUMN `level`  int(4) NULL COMMENT '审批级别，当为审批类型时具有审批级别' AFTER `type`;
+
+ALTER TABLE `hypervisor_server`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `create_time`;
+ALTER TABLE `hypervisor_server_container`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `create_time`;
+
+ALTER TABLE `datacenter`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `mem_alloc`;
+
+ALTER TABLE `zone`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `mem_alloc`;
+
+ALTER TABLE `pool`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `mem_alloc`;
+
+ALTER TABLE `cluster`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `performance_data_sync`;
+
+ALTER TABLE `host_info`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `foreign_ref`;
+
+ALTER TABLE `mini_machine_info`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `create_time`;
+
+ALTER TABLE `storage`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `cluster_uuid`;
+
+
+ALTER TABLE `template_info`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `user_name`;
+
+ALTER TABLE `iso`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `hypervisor_server_container_uuid`;
+
+ALTER TABLE `network`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `create_time`;
+
+ALTER TABLE `network_device`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `state`;
+
+ALTER TABLE `network_scop`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `state`;
+
+ALTER TABLE `networks`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `datacenter_uuid`;
+
+ALTER TABLE `vlanid_pool`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `create_time`;
+
+
+ALTER TABLE `business`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `state`;
+
+ALTER TABLE `order_info`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `submit_time`;
+
+ALTER TABLE `elastic_scaling`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `create_date`;
+
+ALTER TABLE `operating_system`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `state`;
+
+ALTER TABLE `pxe_server`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `state`;
+
+ALTER TABLE `alert`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `unionmon_state`;
+
+ALTER TABLE `operation_log`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `action`;
+
+ALTER TABLE `task_info`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `user_uuid`;
+
+ALTER TABLE `message`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `create_time`;
+
+ALTER TABLE `cm_data`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `type_uuid`;
+
+ALTER TABLE `order_info`
+MODIFY COLUMN `approve_rule_uuid`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL AFTER `user_uuid`;
+
+ALTER TABLE `approve_history`
+MODIFY COLUMN `order_uuid`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT '' AFTER `uuid`,
+MODIFY COLUMN `user_uuid`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '审批人' AFTER `order_uuid`,
+DROP PRIMARY KEY,
+ADD PRIMARY KEY (`uuid`);
+
+ALTER TABLE `software`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `create_time`;
+
+ALTER TABLE `software_install`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `end_time`;
+
+ALTER TABLE `software_parameter`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `state`;
+
+ALTER TABLE `software_resource`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `charging_rules_uuid`;
+
+ALTER TABLE `vdc`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `charging_rules_uuid`;
+
+ALTER TABLE `vpc`
+ADD COLUMN `organization_uuid`  varchar(128) NULL AFTER `foreign_ref`;
+
+ALTER TABLE `service_catalog_specification_relation`
+MODIFY COLUMN `value`  varchar(300) NULL DEFAULT NULL AFTER `type`;
+----20180129 end----
+----20180313 ----
+许伟 添加系统参数,ctirix自动审批最大规格台数 
+INSERT INTO `sysconfig` (`uuid`, `visible`, `module_name`, `param_name`, `value`) VALUES ('101', '1', 'ctirix自动审批固定规格最大台数', 'ctirix_auto_size', '2');
+----20180313 end----

@@ -1,0 +1,1 @@
+ALTER TABLE hypervisor_server_container ADD COLUMN alias varchar(128) DEFAULT NULL COMMENT '别名' AFTER uuid;

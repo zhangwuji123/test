@@ -1,0 +1,66 @@
+{
+	"cmDataSave":{
+		"name" : "cmDataSave",
+		"ip" : "127.0.0.1",
+		"port" : "80",
+		"uri":"/cloud-web/ciData/save",
+		"type" : "POST",
+		"header" : {"Content-Type":"application/json"}
+	},
+	"deleteByValue":{
+		"name" : "deleteByValue",
+		"ip" : "127.0.0.1",
+		"port" : "80",
+		"uri":"/cloud-web/ciData/deleteByValue",
+		"type" : "POST",
+		"header" : {"Content-Type":"application/json"}
+	},
+	"saveFirewalls":{
+		"name" : "saveFirewalls",
+		"ip" : "127.0.0.1",
+		"port" : "80",
+		"uri":"/cloud-web/firewalls/save",
+		"type" : "POST",
+		"header" : {"Content-Type":"application/json"}
+	},
+	"saveLb":{
+		"name" : "saveLb",
+		"ip" : "127.0.0.1",
+		"port" : "80",
+		"uri":"/cloud-web/lb/save",
+		"type" : "POST",
+		"header" : {"Content-Type":"application/json"}
+	},
+	"saveSafeGroup":{
+		"name" : "saveSafeGroup",
+		"ip" : "127.0.0.1",
+		"port" : "80",
+		"uri":"/cloud-web/safegroup/save",
+		"type" : "POST",
+		"header" : {"Content-Type":"application/json"}
+	},
+	"configSafeGroup":{
+		"name" : "configSafeGroup",
+		"ip" : "127.0.0.1",
+		"port" : "80",
+		"uri":"/cloud-web/safegroup/config",
+		"type" : "POST",
+		"header" : {"Content-Type":"application/json"}
+	},
+	"configFirewalls":{
+		"name" : "configFirewalls",
+		"ip" : "127.0.0.1",
+		"port" : "80",
+		"uri":"/cloud-web/firewalls/config",
+		"type" : "POST",
+		"header" : {"Content-Type":"application/json"}
+	},
+	"configLbMonitor":{
+		"name" : "configLbMonitor",
+		"ip" : "127.0.0.1",
+		"port" : "80",
+		"uri":"/cloud-web/lb/saveLbMonitor",
+		"type" : "POST",
+		"header" : {"Content-Type":"application/json"}
+	}
+}

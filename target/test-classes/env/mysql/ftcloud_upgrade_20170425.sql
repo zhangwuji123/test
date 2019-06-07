@@ -1,0 +1,1 @@
+UPDATE sys_module set url="/complianceCheckDevice",sn="complianceCheckDevice" where uuid="52"

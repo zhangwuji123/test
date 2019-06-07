@@ -1,0 +1,1 @@
+INSERT INTO `compliance_check_classify` VALUES ('iden_auth_linux', '用户验证', 'Linux');

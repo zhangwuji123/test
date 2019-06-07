@@ -1,0 +1,1 @@
+ALTER TABLE `resource_protect_info` ADD COLUMN `protect_password` varchar(128) DEFAULT NULL COMMENT '锁定密码' AFTER `protect_end_time`;

@@ -1,0 +1,1 @@
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('64', NULL, '资源架构', '99', '/resourceFrame', NULL, 'resourceFrame');

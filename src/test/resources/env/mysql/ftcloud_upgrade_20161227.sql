@@ -1,0 +1,13 @@
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('65', NULL, '存储配置项', '99', '/ciStorage', NULL, 'ciStorage');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('67', NULL, '供电环控配置项', '99', '/ciGdhk', NULL, 'ciGdhk');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('68', NULL, '机房配置项', '99', '/ciJf', NULL, 'ciJf');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('69', NULL, '集群配置项', '99', '/ciCluster', NULL, 'ciCluster');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('70', NULL, '逻辑服务器配置项', '99', '/ciLogicServer', NULL, 'ciLogicServer');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('71', NULL, '数据库配置项', '99', '/ciDataBase', NULL, 'ciDataBase');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('72', NULL, '网络设备配置项', '99', '/ciNetworkDevice', NULL, 'ciNetworkDevice');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('73', NULL, '物理服务器配置项', '99', '/ciPhysicalServer', NULL, 'ciPhysicalServer');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('74', NULL, '应用系统配置项', '99', '/ciApplication', NULL, 'ciApplication');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('75', NULL, '中间件配置置项', '99', '/ciMiddleware', NULL, 'ciMiddleware');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('76', NULL, '拓扑展示 ', '99', '/ciTopo', NULL, 'ciTopo');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('77', NULL, '机柜', '99', '/ciRack', NULL, 'ciRack');
+INSERT INTO `sys_module` (`uuid`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('78', NULL, '变更记录', '99', '/ciChain', NULL, 'ciChain');

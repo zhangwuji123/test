@@ -1,0 +1,10 @@
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac5771015dac5e1fb20002', '云主机计费规则关闭', 0, 1, 4, 0.000, '2017-8-4 16:30:35', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac5771015dac5ec3a30007', '负载均衡计费规则关闭', 0, 2, 4, 0.000, '2017-8-4 16:31:17', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac5771015dac5f09cf0009', '块存储计费规则关闭', 0, 3, 4, 0.000, '2017-8-4 16:31:35', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac5771015dac5f587b000b', '云存储计费规则关闭', 0, 4, 4, 0.000, '2017-8-4 16:31:56', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac5771015dac5f9b07000d', '物理机计费规则关闭', 0, 5, 4, 0.000, '2017-8-4 16:32:13', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac600c015dac6102c10000', '弹性调度计费规则关闭', 0, 6, 4, 0.000, '2017-8-4 16:33:45', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac600c015dac63373f0002', '带宽计费规则关闭', 0, 7, 4, 0.000, '2017-8-4 16:36:09', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac600c015dac63803a0005', '流量计费规则关闭', 0, 8, 4, 0.000, '2017-8-4 16:36:28', '');
+INSERT INTO `charging_rules` VALUES ('2c908c2b5dac600c015dac6415e90008', '软件计费规则关闭', 0, 9, 5, 0.000, '2017-8-4 16:37:06', '');
+UPDATE `sys_module` SET `uuid`='95', `visible`='0', `description`=NULL, `name`='系统工具', `priority`='99', `url`='/util', `parent_uuid`=NULL, `sn`='util' WHERE (`uuid`='95');

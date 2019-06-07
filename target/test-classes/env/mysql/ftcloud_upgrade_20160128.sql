@@ -1,0 +1,12 @@
+alter table datacenter add cpu_alloc int(11) comment 'CPU已经分配的核数';
+alter table datacenter add cpu_number int(11) comment 'CPU的核数';
+alter table zone add cpu_alloc int(11) comment 'CPU已经分配的核数';
+alter table zone add cpu_number int(11) comment 'CPU的核数';
+alter table pool add cpu_alloc int(11) comment 'CPU已经分配的核数';
+alter table pool add cpu_number int(11) comment 'CPU的核数';
+alter table cluster add cpu_alloc int(11) comment 'CPU已经分配的核数';
+alter table cluster add cpu_number int(11) comment 'CPU的核数';
+update datacenter set cpu_alloc = 0,cpu_number = 0;
+update zone set cpu_alloc = 0,cpu_number = 0;
+update pool set cpu_alloc = 0,cpu_number = 0;
+update cluster set cpu_alloc = 0,cpu_number = 0;

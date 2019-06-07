@@ -1,0 +1,2 @@
+INSERT INTO `sys_module` VALUES ('37', NULL, '消费记录', 99, '/consume', NULL, 'consume');
+INSERT INTO `sysconfig` VALUES ('10', '文件上传绝对路径', 'file_upload_absolute_path', '/usr/local/ftcloud/upload/images/');

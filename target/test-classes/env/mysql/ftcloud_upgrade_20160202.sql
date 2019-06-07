@@ -1,0 +1,6 @@
+SET FOREIGN_KEY_CHECKS=0;
+ALTER TABLE `cloudstore_user`
+MODIFY COLUMN `uuid`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT 'uuid' FIRST ;
+ALTER TABLE `cloudstore_directory`
+MODIFY COLUMN `uuid`  varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT 'uuid' FIRST ;
+SET FOREIGN_KEY_CHECKS=1;

@@ -1,0 +1,1 @@
+update sys_module set url='/licence',sn='licence' where uuid = '61';

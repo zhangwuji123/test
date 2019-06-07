@@ -1,0 +1,1 @@
+update network set bg_name = name where bg_name is null;

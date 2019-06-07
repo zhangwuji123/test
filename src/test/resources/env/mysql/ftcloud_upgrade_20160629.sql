@@ -1,0 +1,1 @@
+insert into sys_module (uuid,name,priority,url,sn) values ('49','部门配额',99,'/departmentQuota','departmentQuota');

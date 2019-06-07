@@ -1,0 +1,1 @@
+ALTER TABLE `storage` ADD CONSTRAINT `cluster_uuid_fk_1` FOREIGN KEY (`cluster_uuid`) REFERENCES `cluster` (`uuid`) ON DELETE RESTRICT ON UPDATE RESTRICT;

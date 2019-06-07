@@ -1,0 +1,2 @@
+ALTER TABLE `storage`
+MODIFY COLUMN `state`  int(2) UNSIGNED NULL DEFAULT NULL COMMENT '1：可用,0：异常,2:已删除';

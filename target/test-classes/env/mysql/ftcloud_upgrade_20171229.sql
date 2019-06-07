@@ -1,0 +1,1 @@
+INSERT INTO `sys_module` (`uuid`, `visible`, `description`, `name`, `priority`, `url`, `parent_uuid`, `sn`) VALUES ('108', '1', NULL, '主机性能分布情况', '99', '/hostDistributed', NULL, 'hostDistributed');

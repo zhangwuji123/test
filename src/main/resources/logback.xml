@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}[%L] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="rollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${CLOUD_LOG_HOME}/web-admin.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${CLOUD_LOG_HOME}/web-admin.log.%d{yyyy-MM-dd}</fileNamePattern>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d [%thread] %-5level %logger{36} [%L] - %msg%n</pattern>
+    </encoder>
+  </appender>
+  
+  <appender name="scalingLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${CLOUD_LOG_HOME}/web-admin-scaling.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${CLOUD_LOG_HOME}/web-admin-scaling.log.%d{yyyy-MM-dd}</fileNamePattern>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d [%thread] %-5level %logger{36} [%L] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- project default level -->
+
+  <logger name="com.cloud.operation.scaling" level="debug" additivity="false">
+    <appender-ref ref="scalingLogFile" />
+  </logger>
+  <logger name="com.cloud.operation" level="INFO" />
+  <logger name="com.cloud" level="INFO" />
+
+<!--
+  <logger name="org.springframework.web.servlet.DispatcherServlet" level="DEBUG" />
+  <logger name="org.springframework.orm.jpa" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+  </logger>
+  <logger name="org.hibernate" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+  </logger>
+  <logger name="com.mchange" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+  </logger>
+
+  <logger name="org.springframework" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+  </logger>
+
+  <logger name="com.opensymphony.sitemesh" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+  </logger>
+  <logger name="org.apache.struts2" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+    </logger>
+  <logger name="org.apache" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+  </logger>
+  <logger name="freemarker" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+  </logger>
+  <logger name="org.displaytag" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+  </logger>
+  <logger name="catalia" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+  </logger>
+  <logger name="system" additivity="false">
+    <level value="INFO" />
+    <appender-ref ref="rollingFile" />
+  </logger>
+-->
+  <root level="info">
+        <appender-ref ref="console" />
+    <appender-ref ref="rollingFile" />
+  </root>
+</configuration>

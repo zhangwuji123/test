@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:context="http://www.springframework.org/schema/context" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+  xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+  xmlns:aop="http://www.springframework.org/schema/aop"
+  xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.1.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-4.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.1.xsd
+		http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa-1.3.xsd 
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd">
+
+  <description>Spring公共配置 </description>
+
+  <aop:aspectj-autoproxy proxy-target-class="true" expose-proxy="true"/>
+  <!-- 使用annotation 自动注册bean, 并保证@Required、@Autowired的属性被注入 -->
+  <context:component-scan base-package="com.cloud.operation">
+    <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+  </context:component-scan>
+
+  <!-- Jpa Entity Manager 配置 -->
+  <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean"
+    depends-on="dataSource">
+    <property name="dataSource" ref="dataSource" />
+    <property name="jpaVendorAdapter" ref="hibernateJpaVendorAdapter" />
+    <property name="packagesToScan" value="com.cloud.operation" />
+    <property name="jpaProperties">
+      <props>
+        <!-- <prop key="hibernate.hbm2ddl.auto">update</prop> -->
+        <prop key="hibernate.current_session_context_class">thread</prop>
+        <prop key="hibernate.connection.release_mode">after_transaction</prop>
+
+        <!-- 抓取策略 -->
+        <prop key="hibernate.max_fetch_depth">1</prop>
+        <prop key="hibernate.default_batch_fetch_size ">4</prop>
+        <prop key="hibernate.jdbc.fetch_size">30</prop>
+        <prop key="hibernate.jdbc.batch_size">50</prop>
+        <prop key="hibernate.enable_lazy_load_no_trans">true</prop>
+
+        <!-- 缓存 -->
+        <prop key="hibernate.cache.use_second_level_cache">false</prop>
+        <prop key="hibernate.cache.use_query_cache">false</prop>
+        <prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</prop>
+        <prop key="net.sf.ehcache.configurationResourceName">cache/ehcache-hibernate-local.xml</prop>
+
+
+        <!-- 建表的命名规则 -->
+        <prop key="hibernate.ejb.naming_strategy">org.hibernate.cfg.ImprovedNamingStrategy</prop>
+
+        <!-- 用于调试的属性 -->
+        <prop key="hibernate.show_sql">true</prop>
+        <prop key="hibernate.format_sql">true</prop>
+
+        <!-- <prop key="hibernate.generate_statistics">true</prop> <prop key="hibernate.use_sql_comments">true</prop> <prop 
+          key="hibernate.show_sql">true</prop> <prop key="hibernate.format_sql">true</prop> -->
+        <!-- end 用于调试的属性 -->
+      </props>
+    </property>
+  </bean>
+  
+  <bean id="mqConfig" class="com.cloud.adapter.client.mq.MqConfig">
+      <property name="configHolder" ref="propertyPlaceholderConfigurer"/>
+      <property name="mqConfigPrefix" value="rabbitmq."/>
+  </bean>
+    
+  <bean id="sender" class="com.cloud.adapter.client.mq.MessageRouter">
+       <property name="mqConfig" ref="mqConfig"/>
+  </bean>
+
+  <bean id="rabbitmqConn" class="com.cloud.operation.core.utils.RabbitMQConnectionManager">
+    <property name="messageRouter" ref="sender" />
+    <property name="needCovertRequest" value="${needCovertRequest}"/>
+  </bean>
+  
+  
+  <bean id="hibernateJpaVendorAdapter" class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+    <property name="databasePlatform">
+      <bean factory-method="getDialect" class="com.cloud.operation.core.persistence.Hibernates">
+        <constructor-arg ref="dataSource" />
+      </bean>
+    </property>
+  </bean>
+
+  <!-- Spring Data Jpa配置 -->
+  <jpa:repositories base-package="com.cloud.operation" 
+    factory-class="com.cloud.operation.db.dao.main.MyRepositoryFactoryBean" entity-manager-factory-ref="entityManagerFactory" />
+
+  <!-- Jpa 事务配置 -->
+  <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+    <property name="entityManagerFactory" ref="entityManagerFactory" />
+  </bean>
+
+  <!-- 使用annotation定义事务 -->
+  <tx:annotation-driven transaction-manager="transactionManager" order="3"/>
+
+  <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+    <property name="driverClass" value="${jdbc.driver}" />
+    <property name="jdbcUrl" value="${jdbc.url}" />
+    <property name="user" value="${jdbc.username}" />
+    <property name="password" value="${jdbc.password}" />
+    <property name="minPoolSize" value="${c3p0.minPoolSize}" />
+    <property name="maxPoolSize" value="${c3p0.maxPoolSize}" />
+    <property name="initialPoolSize" value="${c3p0.initialPoolSize}" />
+    <property name="maxIdleTime" value="${c3p0.maxIdleTime}" />
+    <property name="idleConnectionTestPeriod" value="${c3p0.idleConnectionTestPeriod}" />
+    <property name="maxStatements" value="${c3p0.maxStatements}" />
+    <property name="testConnectionOnCheckin" value="${c3p0.testConnectionOnCheckin}" />
+  </bean>
+  
+  <bean id="vncConfig" class="com.cloud.operation.service.vo.VncConfig">
+    <property name="vmwareVncFilePath" value="${vmwareVncFilePath}" />
+	<property name="vmwareVncUrl" value="${vmwareVncUrl}" />
+	<property name="vmwareVncPort" value="${vmwareVncPort}" />
+  </bean>
+  
+  <!-- Redis操作 -->
+  <bean id="jedisClient" class="com.cloud.operation.core.utils.JedisClient">
+  	<constructor-arg><value>${jedis.maxActive}</value></constructor-arg>
+  	<constructor-arg><value>${jedis.maxIdle}</value></constructor-arg>
+  	<constructor-arg><value>${jedis.maxWaitMillis}</value></constructor-arg>
+  	<constructor-arg><value>${jedis.host}</value></constructor-arg>
+  	<constructor-arg><value>${jedis.port}</value></constructor-arg>
+  	<constructor-arg><value>${jedis.type}</value></constructor-arg>
+  	<constructor-arg><value>${jedis.maxRedirections}</value></constructor-arg>
+  	<constructor-arg><value>${jedis.lockTimeOut}</value></constructor-arg>
+  </bean>
+  
+  <!-- cloudstack vnc -->
+  <bean id="cloudstackVNC" class="com.cloud.operation.service.vnc.CloudstackVNC">
+    <property name="contextPath" value="${cloudstack.vnc.contextPath}"/>
+    <property name="password" value="${cloudstack.vnc.password}"/>
+    <property name="port" value="${cloudstack.vnc.port}"/>
+  </bean>
+  
+  <bean id="configUtil" class="com.cloud.operation.core.utils.ConfigUtil">
+    <property name="fileUploadPath" value="${fileUploadPath}"/>
+  </bean>
+  
+  <!-- 弹性伸缩 -->
+  <bean class="com.cloud.operation.scaling.ScalingManager"/>
+  
+  <!-- 事件管理 -->
+  <bean class="com.cloud.operation.event.EventManager">
+      <property name="listeners">
+          <list>
+              
+          </list>
+      </property>
+  </bean>
+  
+  <!-- production环境 -->
+  <beans profile="production">
+    <!-- 数据源配置, 使用DBCP数据库连接池 -->
+    <!-- 数据源配置,使用应用服务器的数据库连接池 -->
+    <!--<jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/ExampleDB" /> -->
+  </beans>
+</beans>

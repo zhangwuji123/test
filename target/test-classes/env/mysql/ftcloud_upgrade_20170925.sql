@@ -1,0 +1,1 @@
+delete from sys_module where uuid in ('21','23');
